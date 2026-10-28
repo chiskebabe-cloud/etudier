@@ -1,0 +1,17 @@
+MISE EN LIGNE SUR RENDER
+========================
+1. Créez un dépôt GitHub PRIVÉ et envoyez-y tous les fichiers de ce dossier.
+2. Sur render.com : New > Web Service > choisissez le dépôt.
+   Runtime : Node | Build : npm install | Start : node server.js
+   (ou New > Blueprint : render.yaml est déjà prêt)
+3. Dans Environment, ajoutez ces 4 variables :
+     SITE_USER            votre identifiant
+     SITE_PASSWORD        un mot de passe LONG (pas 12345678)
+     GROQ_API_KEY         NOUVELLE clé Groq
+     OPENROUTER_API_KEY   NOUVELLE clé OpenRouter
+4. Deploy. L'adresse sera https://votre-site.onrender.com
+
+IMPORTANT : les anciennes clés ont été partagées en clair. Révoquez-les
+(console.groq.com et openrouter.ai/keys) et créez-en de nouvelles.
+Les clés ne sont plus dans la page : le serveur les ajoute lui-même.
+Test local : SITE_USER=a SITE_PASSWORD=b GROQ_API_KEY=... node server.js

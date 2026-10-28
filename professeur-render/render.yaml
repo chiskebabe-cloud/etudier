@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: professeur-tableau
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: SITE_USER
+        sync: false
+      - key: SITE_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false

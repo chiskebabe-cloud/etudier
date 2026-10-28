@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0f1a17">
+<title>Professeur & Tableau</title>
+
+<style>
+:root{--bg:#1b2a26;--ink:#f4f1e8;--board:#2f4f45;--frame:#8a5a2b;--acc:#ffd86b;--ui:#fff;--uit:#1b2a26;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif;display:flex;flex-direction:column}
+#app{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+#app.fs{position:fixed;inset:0;z-index:99;padding-top:env(safe-area-inset-top,0px)}
+header{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:#0f1a17;align-items:center}
+header input,header select,header button{font:inherit;padding:8px 10px;border-radius:8px;border:0}
+#sb{flex:1 1 420px;min-width:0;display:flex;align-items:stretch;background:#fff;color:var(--uit);border-radius:14px;overflow:hidden;box-shadow:0 0 0 2px transparent;transition:box-shadow .15s}
+#sb:focus-within{box-shadow:0 0 0 2px var(--acc)}
+#sb .seg{display:flex;flex-direction:column;justify-content:center;gap:1px;flex:1 1 0;min-width:0;padding:5px 12px;cursor:text;border-left:1px solid #1b2a2622}
+#sb .seg:first-child{border-left:0}
+#sb .seg:hover{background:#f3efe3}
+#sb .seg span{font:700 10px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#8a5a2b}
+#sb input,#sb select{width:100%;min-width:0;flex:none;padding:2px 0;border:0;border-radius:0;background:transparent;color:var(--uit);font:inherit;font-size:14px;outline:0}
+#parse{flex:0 0 100%;font:12px system-ui,sans-serif;color:var(--acc);padding:0 4px}#parse b{color:var(--ink);font-weight:600}
+@media(max-width:700px){#sb{flex-direction:column;flex-basis:100%;border-radius:12px}#sb .seg{border-left:0;border-top:1px solid #1b2a2622}#sb .seg:first-child{border-top:0}}
+button{background:var(--acc);color:#222;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5}
+main{flex:1;display:flex;min-height:0}
+#prof{flex:0 0 26%;min-width:0;display:flex;flex-direction:column;gap:10px;align-items:stretch;padding:12px 0 12px 12px;overflow:auto}
+#moi{margin:0;text-align:center;flex:0 0 auto}#pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font:12px system-ui,sans-serif}#pick.hid{display:none}#pick span{opacity:.75}#pick button{padding:3px 9px}body.clean #pick{display:none!important}
+#moi img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:3px solid var(--acc);background:#000}
+#moi canvas{display:none;width:100%;aspect-ratio:1/1;border-radius:12px;border:3px solid var(--acc);background:#000}#moi.live img{display:none}#moi.live canvas{display:block}
+#moi canvas{cursor:crosshair;touch-action:none}#bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}#setBtn.on{outline:2px solid var(--acc)}#mctl:not(.hid){border:1px solid var(--acc);border-radius:10px;padding:8px;background:#ffffff0d}#mctl{font:11px system-ui,sans-serif;display:grid;grid-template-columns:1fr 1fr auto;gap:4px 6px;margin-top:6px;text-align:left;align-items:center}#mctl.hid{display:none}#mctl input{width:100%;min-width:0}
+#moi #gal{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}#moi #gal.hid{display:none}#moi #gal img{display:block;width:34px;height:34px;aspect-ratio:1/1;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer}#moi #gal img.on{border-color:var(--acc)}
+#cadre{position:relative}
+#cadre #mctl:not(.hid){position:absolute;left:6px;right:6px;top:6px;margin:0;max-height:calc(100% - 12px);overflow:auto;background:#0f1a17ee;z-index:5;box-shadow:0 2px 10px #0008}
+@media(max-width:700px){#cadre #mctl:not(.hid){position:fixed;left:8px;right:8px;top:auto;bottom:8px;max-height:45vh;z-index:150}}
+#para{flex:0 1 auto;min-height:90px;max-height:42vh;display:flex;flex-direction:column;border:2px solid var(--acc);border-radius:10px;background:#0f1a17;overflow:hidden}#para.hid{display:none}
+#para .ph{flex:0 0 auto;padding:5px 10px;font:600 12px system-ui,sans-serif;color:var(--acc);background:#ffffff12;border-bottom:1px solid #ffffff22}
+#para .pb{position:relative;flex:1 1 auto;overflow:auto;padding:8px 10px;font:14px/1.5 system-ui,sans-serif;color:var(--ink)}
+#para .ps{border-radius:4px;transition:background .2s}#para .ps.on{background:rgba(255,216,107,.28);box-shadow:0 0 0 2px rgba(255,216,107,.28)}
+#para{position:relative;z-index:50;box-shadow:0 4px 16px #000a}
+@media(max-width:700px){#para{position:fixed;left:8px;right:8px;bottom:8px;max-height:30vh;z-index:120}}
+body.clean #para{display:none!important}
+#sbw{position:relative;z-index:60;flex:0 0 auto;display:flex;flex-direction:column;gap:6px;padding:8px;background:#0f1a17;border:2px solid var(--acc);border-radius:12px;box-shadow:0 4px 16px #000a}
+#sbw #sb{flex:none;width:100%;flex-direction:column}#sbw #sb .seg{border-left:0}#sbw #go{width:100%;cursor:pointer}
+@media(max-width:700px){#sbw{position:fixed;left:8px;right:8px;bottom:8px;z-index:130;flex-direction:row;align-items:stretch}#sbw #sb{flex:1 1 auto;width:auto}#sbw #go{width:auto}#para{bottom:84px}}
+#tit{position:relative;z-index:60;flex:0 0 auto;max-height:30vh;display:flex;flex-direction:column;border:1px solid #ffd86b88;border-radius:12px;background:linear-gradient(180deg,#14221e,#0f1a17);box-shadow:0 6px 20px #000b,inset 0 1px 0 #ffffff14;overflow:hidden}
+#tit .th{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;font:700 11px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);background:#ffffff0d;border-bottom:1px solid #ffffff1f}
+#tit .tc{min-width:20px;padding:1px 7px;border-radius:999px;background:var(--acc);color:#1b2a26;font:700 11px system-ui,sans-serif;text-align:center}
+#tit .tb{position:relative;overflow:auto;padding:6px;display:flex;flex-direction:column;gap:3px}
+#tit .empty{padding:10px 8px;font:italic 12px/1.4 system-ui,sans-serif;opacity:.6;color:var(--ink)}
+#tit .ti{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin:0;padding:6px 8px;border:1px solid transparent;border-radius:8px;background:none;color:var(--ink);font:600 13px/1.3 system-ui,sans-serif;cursor:pointer;transition:background .15s,border-color .15s}
+#tit .ti .n{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ffffff1f;font:700 11px system-ui,sans-serif}
+#tit .ti .t{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+#tit .ti:hover{background:#ffffff12}
+#tit .ti.on{background:rgba(255,216,107,.18);border-color:#ffd86b99;color:var(--acc)}#tit .ti.on .n{background:var(--acc);color:#1b2a26}
+@media(max-width:700px){#tit{position:fixed;left:8px;right:8px;bottom:84px;height:16vh;max-height:none;z-index:125}#para{bottom:calc(84px + 16vh + 8px)}}
+.pt .vl{align-items:center}
+.pt .vl .vth{position:relative;display:block;flex:0 0 auto;width:10%;min-width:96px;max-width:150px;aspect-ratio:16/9;border-radius:6px;overflow:hidden;border:1px solid #ffffff55;background:#000}
+.pt .vl .vth:hover{border-color:var(--acc)}.pt .vl .vth img{display:block;width:100%;height:100%;object-fit:cover}
+.pt .vl .vth::after{content:"\25B6";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;background:#0003;text-shadow:0 1px 3px #000}
+#bw{flex:1;min-width:0;display:flex;flex-direction:column;margin:12px}
+#bw #board{margin:0;flex:1;min-height:0;border-top-width:0;border-radius:0 0 6px 6px}
+#dots{position:relative;z-index:70;flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:7px 14px;min-height:46px;background:linear-gradient(180deg,#9c6a35,var(--frame));border-radius:6px 6px 0 0;box-shadow:inset 0 1px 0 #ffffff33,inset 0 -2px 4px #0004,0 6px 16px #000a}
+#dots .dl{flex:0 0 auto;font:700 11px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff;opacity:.85}
+#dots .dd{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:thin}
+#dots .dt{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin:0;padding:0;border-radius:50%;border:2px solid #ffffffaa;background:#0000004d;color:#fff;font:700 14px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 4px #0006;transition:transform .15s,background .15s,box-shadow .15s}
+#dots .dt:hover{transform:scale(1.1);background:#00000080}
+#dots .dt.done{background:#9be3c4;border-color:#d9fff0;color:#1b2a26}
+#dots .dt.on{background:var(--acc);border-color:#fff;color:#1b2a26;transform:scale(1.18);box-shadow:0 0 0 3px #ffd86b66,0 3px 8px #0008}
+#dots .dd{flex:1 1 auto;min-width:0}
+#dots .dd:empty::before{content:"Les points num\00e9rot\00e9s appara\00eetront d\00e8s que le cours sera g\00e9n\00e9r\00e9.";font:italic 12px system-ui,sans-serif;color:#fff;opacity:.75;white-space:nowrap}
+#dots .dc{flex:0 0 auto;padding:3px 10px;border-radius:999px;background:#0000004d;color:#fff;font:700 12px system-ui,sans-serif;letter-spacing:.04em}#dots .dc:empty{display:none}
+#dots .dq{flex:0 0 auto;margin:0 0 0 auto;padding:4px 12px;border-radius:999px;border:2px solid #ffffffaa;background:#b3261e;color:#fff;font:700 12px system-ui,sans-serif;cursor:pointer;box-shadow:0 2px 4px #0006}#dots .dq:hover{background:#d33a30}
+#dots .dt{position:relative;width:34px;height:34px;font-size:15px}
+#dots .dt+.dt::before{content:"";position:absolute;right:100%;top:50%;width:8px;height:3px;margin-right:0;background:#ffffff55;transform:translateY(-50%)}
+#dots .dt.done+.dt::before,#dots .dt.on::before{background:#9be3c4}
+#moi figcaption{font:12px system-ui,sans-serif;opacity:.7;margin-top:4px}
+#bulle{flex:0 0 auto}
+#cam.hid{display:none}
+#cam{position:fixed;inset:0;z-index:200;background:#000b;display:flex;align-items:center;justify-content:center;padding:12px}
+#cam .cbox{background:#0f1a17;border:2px solid var(--acc);border-radius:14px;padding:12px;width:min(460px,94vw);text-align:center}
+#cam .cvw{position:relative;border-radius:10px;overflow:hidden;background:#000}
+#camv{display:block;width:100%;height:auto;transform:scaleX(-1)}
+#camo{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:50%;aspect-ratio:3/4;border:3px dashed #ffd86bcc;border-radius:50%;box-shadow:0 0 0 999px #0005;pointer-events:none}
+#camt{margin:.6em 0 .2em;font:600 15px system-ui,sans-serif}.cnote{font:11px system-ui,sans-serif;opacity:.65;margin:.1em 0 .6em}
+#cam .crow{display:flex;gap:8px;justify-content:center}#cam button{padding:7px 14px;border-radius:8px;border:0}
+#bulle{width:100%;max-height:100%;overflow:auto;background:rgba(255,255,255,.92);color:#222;border-radius:12px;padding:10px 12px;font-size:15px;min-height:20px}
+#board{flex:1;margin:12px;border:10px solid var(--frame);border-radius:6px;background:var(--board);padding:18px 24px;overflow:auto;font-family:"Segoe Print","Comic Sans MS",cursive;font-size:clamp(16px,2.1vw,26px);line-height:1.5;box-shadow:inset 0 0 40px #0006}
+#board h1{font-size:1.4em;margin:0 0 .4em;color:var(--acc)}
+#board h2{font-size:1.05em;margin:.8em 0 .1em;color:#9be3c4}
+#board .pt>h2{position:sticky;top:0;z-index:3;margin:0 0 .2em;padding:.25em .4em;background:var(--board);border-bottom:2px solid #9be3c4aa}
+#board p{margin:.1em 0}.ex{border:2px dashed var(--acc);padding:8px 12px;margin-top:14px;border-radius:8px}
+[data-say]{cursor:pointer;border-radius:8px;transition:background .2s}
+[data-say]:hover{background:rgba(255,255,255,.08)}
+.sel{background:rgba(255,216,107,.16)!important;box-shadow:0 0 0 2px var(--acc)}
+.pt{display:flow-root}
+.pt .vl{display:flex;flex-wrap:wrap;gap:6px;margin:.35em 0 .2em}.pt .vl .yt{margin:0;padding:2px 10px}
+/* Cadre photo : il épouse exactement la photo (ratio conservé, légende dans la largeur du cadre) */
+.pfig,#fig{display:block;width:fit-content;max-width:100%;padding:0;background:none;border:0;border-radius:0;box-shadow:none;text-align:center}
+.pfig{float:right;margin:.2em 0 .5em .9em}
+#fig{margin:.2em auto .8em}
+.pfig img,#fig img{display:block;width:auto;height:auto;object-fit:contain;border-radius:0;border:0;box-shadow:none;background:none;margin:0 auto}
+#fig img{width:33.333vw;max-width:none;max-height:none} /* photo principale = 1/3 de la largeur de la page */
+.pfig img{width:clamp(110px,15vw,210px);max-width:none;max-height:none} /* petites photos des paragraphes */
+.pfig figcaption,#fig figcaption{width:0;min-width:100%;font:11px/1.3 system-ui,sans-serif;color:var(--ink);opacity:.7;margin-top:4px;overflow-wrap:anywhere}
+.pfig a,#fig a{color:var(--acc)}
+.intro{margin:.2em 0 .9em!important;padding:.2em 0 .2em .8em;border-left:4px solid var(--acc);font-style:italic}
+.tip{font:13px system-ui,sans-serif;opacity:.65;margin:-.3em 0 .8em}
+.q{margin:.7em 0;padding-top:.5em;border-top:1px dashed #ffffff33}.q:first-of-type{border-top:0}
+/* photo + vidéo côte à côte, 50 / 50 */
+#media{display:flex;gap:12px;align-items:flex-start;margin:.2em 0 .9em}
+#media:empty{display:none}
+#media #fig{flex:0 0 auto;width:min(100%,520px);max-width:none;float:none;margin:0 auto;min-width:0}
+#media #fig img{width:100%;aspect-ratio:16/9;object-fit:cover;max-height:none}
+@media(max-width:700px){#media{flex-direction:column}#media #fig{width:100%}}
+.yt{display:inline-block;margin:.4em 0;padding:4px 12px;border:1px solid var(--acc);border-radius:16px;color:var(--acc);font:13px system-ui,sans-serif;text-decoration:none}
+.yt:hover{background:#ffffff14}
+.hid{display:none}.ctl{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+@media(max-width:700px){main{flex-direction:column}#prof{flex:0 0 auto;max-height:34%;flex-direction:row;padding:8px 12px 0}#moi{flex:0 0 90px}#bulle{flex:1 1 auto}}
+/* Interface épurée : on ne garde que la barre « sujet, thème, niveau » + le tableau. Alt+U : afficher / masquer les commandes. */
+body.clean #setBtn,body.clean #expBtn,body.clean #bar,body.clean #media,body.clean .pfig,
+body.clean #go,body.clean #camBtn,body.clean #picBtn,body.clean #voix,body.clean #full{display:none!important}
+#pz{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:300;background:#000c;color:#fff;border:1px solid var(--acc);padding:7px 16px;border-radius:18px;font:14px system-ui,sans-serif;pointer-events:none}
+/* Lecteur YouTube intégré : le tableau devient un lecteur */
+#board.vmode>*:not(#vplay){display:none!important}
+#board.vmode{display:flex;flex-direction:column;padding:10px 12px;overflow:hidden}#vplay{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;font-family:system-ui,sans-serif;user-select:none}
+#vplay .vbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#vplay .vtt{flex:1;min-width:120px;font:600 15px/1.3 system-ui,sans-serif;color:var(--acc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vplay .vbar button{padding:6px 12px;border-radius:8px;border:0;font:inherit;font-size:14px}
+#vplay .vbar .yt{margin:0;font-size:13px}#vplay .vbar .vs.on{outline:2px solid var(--acc)}
+#vplay .vbox{position:relative;flex:1;min-height:0;width:100%;container-type:size;display:flex;align-items:center;justify-content:center;background:#000;border-radius:8px;overflow:hidden}
+#vplay .vbox iframe{display:block;border:0;width:min(100cqw,calc(100cqh*16/9));height:min(100cqh,calc(100cqw*9/16))}#vplay .vhint{font:12px system-ui,sans-serif;opacity:.65;white-space:nowrap}
+#vplay .verr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;color:#fff;font:14px/1.45 system-ui,sans-serif}
+#vplay .verr small{opacity:.7;font-size:12px}
+body.vm #pz{display:none!important}
+body.clean #bulle{display:none!important}
+body.clean header{display:none}
+#vthumbs{flex:0 0 auto;font:11px system-ui,sans-serif}#vthumbs .cap{opacity:.7}
+#vthumbs .vt5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:3px}
+#vthumbs a{position:relative;display:block;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#000;border:1px solid #ffffff33}
+#vthumbs a:hover{border-color:var(--acc)}
+#vthumbs img{display:block;width:100%;height:100%;object-fit:cover}
+#vthumbs a::after{content:"▶";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;background:#0003}
+body.clean #sb{flex-basis:100%}
+/* Mode « paragraphe en cours » : le tableau n'affiche que le paragraphe lu, en grand, sur toute sa surface */
+#board.focus .tip{display:none}
+#board.focus #in:not(.sel),#board.focus .pt:not(.sel){display:none}
+#board.focus:has(#in.sel) #ex,#board.focus:has(.pt.sel) #ex{display:none}
+#board.focus #in.sel,#board.focus .pt.sel{background:none!important;box-shadow:none!important;width:100%;font-size:1.5em;line-height:1.6}
+#board.focus .pt.sel>h2{font-size:1.1em}
+/* phrases cliquables (sous-paragraphes) */
+.ss{cursor:pointer;border-radius:6px;transition:background .2s,box-shadow .2s;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.ss:hover{background:rgba(255,255,255,.1)}
+.ss.rd{background:rgba(255,216,107,.28);box-shadow:0 0 0 3px rgba(255,216,107,.28)}
+#para .ps{cursor:pointer}#para .ps:hover{background:rgba(255,255,255,.1)}
+/* miniatures + bouton réglages côte à côte */
+#moi #galrow{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px}#moi #galrow #gal{margin-top:0}
+#galSet{flex:0 0 auto;width:34px;height:34px;margin:0;padding:0;border-radius:6px;border:2px solid #ffffff55;background:#0000004d;color:#fff;font-size:17px;line-height:1;cursor:pointer}
+#galCam{flex:0 0 auto;width:34px;height:34px;margin:0;padding:0;border-radius:6px;border:2px solid #ffffff55;background:#0000004d;color:#fff;font-size:17px;line-height:1;cursor:pointer}#galCam:hover{border-color:var(--acc)}
+#galSet:hover{border-color:var(--acc)}#galSet.on{background:var(--acc);border-color:#fff;color:#1b2a26}
+/* ----- Démarrage plein écran + design adaptatif (PC / tablette / téléphone, portrait / paysage) ----- */
+@supports(height:100dvh){html,body{height:100dvh}}
+#start{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;overflow:auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:radial-gradient(120% 90% at 50% 0%,#2f4f45 0%,#1b2a26 60%,#0f1a17 100%)}
+#start.hid{display:none}#start .sc{width:min(92vw,520px);margin:auto;text-align:center}
+#start .em{font-size:clamp(40px,12vw,72px);line-height:1}#start h1{font-size:clamp(24px,6vw,40px);margin:.2em 0}
+#start p{font-size:clamp(14px,3.2vw,17px);opacity:.85;margin:.4em 0 1.1em}
+#start .go{display:block;width:100%;min-height:56px;font-size:clamp(18px,4.5vw,24px);padding:.7em 1em;border:0;border-radius:14px}
+#start .skip{background:none;color:var(--ink);opacity:.7;font-weight:400;text-decoration:underline;border:0;margin-top:10px;padding:10px;min-height:40px}
+@media(max-height:420px){#start .em{display:none}#start h1{font-size:22px}#start p{margin:.2em 0 .7em}#start .go{min-height:48px;font-size:18px}}
+#rot{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:400;max-width:92vw;background:#0f1a17f2;color:var(--ink);border:1px solid var(--acc);border-radius:12px;padding:8px 14px;font:13px system-ui,sans-serif;text-align:center}#rot.hid{display:none}
+@media(pointer:coarse){header button,header select,#pick button{min-height:40px}}
+@media(min-width:701px) and (max-width:1100px){#prof{flex-basis:32%}}
+@media(max-height:480px) and (orientation:landscape){header{gap:4px;padding:4px 8px}header input,header select,header button{padding:4px 8px;font-size:13px;min-height:0}#sb .seg{padding:2px 10px}#prof{flex-basis:30%;padding:6px 0 6px 8px;gap:6px}#parse{display:none}}
+</style></head><body class="clean">
+<div id="cam" class="hid"><div class="cbox"><div class="cvw"><video id="camv" autoplay muted playsinline></video><div id="camo"></div></div>
+<p id="camt">Autorisez la caméra…</p><p class="cnote">Votre photo reste dans votre navigateur : elle n'est ni envoyée ni enregistrée.</p>
+<div class="crow"><button id="camgo">📸 Capturer maintenant</button><button id="camskip">Ignorer</button></div></div></div>
+<div id="start" role="dialog" aria-modal="true" aria-label="Démarrage"><div class="sc"><div class="em">🎓</div><h1>Professeur &amp; Tableau</h1><p id="startNote"></p><button id="startGo" class="go" type="button">▶ Commencer</button><button id="startSkip" class="skip" type="button">Continuer sans plein écran</button></div></div>
+<div id="rot" class="hid" role="status">↻ Tournez l'appareil en mode paysage pour un meilleur affichage</div>
+<div id="app">
+<header>
+
+
+<button id="camBtn" title="Prendre ma photo avec la webcam">📷 Ma photo</button><button id="picBtn" title="Choisir une autre photo (fichier)">🖼️ Autre photo</button><input type="file" id="picIn" accept="image/*" class="hid"><button id="setBtn" class="gear" title="Afficher les réglages de l'avatar" aria-label="Réglages de l'avatar" aria-expanded="false" style="padding:3px 9px">⚙️</button><button id="camMini" class="gear" type="button" title="Prendre ma photo avec la webcam" aria-label="Webcam" style="padding:3px 9px">📷</button>
+<button id="voix">🔊 Voix : oui</button>
+<button id="full">⛶ Plein écran</button>
+<div id="parse" class="hid"></div>
+</header>
+<main>
+<section id="prof"><div id="pick"><span>Votre avatar :</span><button id="pkCam" title="Prendre ma photo avec la webcam">📷 Webcam</button><button id="pkPic" title="Choisir une photo (fichier)">🖼️ Photo</button><button id="pkSet" title="Réglages de l'avatar">⚙️</button></div><figure id="moi" class="hid"><div id="cadre"><img id="moiImg" alt="Ma photo"><canvas id="moiCv"></canvas><div id="mctl" class="hid"><b style="grid-column:1/4;font-size:12px">👄 Bouche : glissez les points ● des coins = largeur, du haut / bas des lèvres = épaisseur · glissez ailleurs = déplacer · molette = largeur · Maj = hauteur · Ctrl = épaisseur · Alt = orientation · 🦷 Dents : glissez le losange ◆ (haut / bas = longueur, gauche / droite = largeur)</b><button id="mw1" style="padding:3px 8px">Larg. −</button><button id="mw2" style="padding:3px 8px">Larg. +</button><button id="mrz" style="padding:3px 8px">↺</button><button id="mh1" title="Hauteur des lèvres −" style="padding:3px 8px">Haut. −</button><button id="mh2" title="Hauteur des lèvres +" style="padding:3px 8px">Haut. +</button><button id="mr1" style="padding:3px 8px">↶ Orient.</button><button id="mr2" style="padding:3px 8px">Orient. ↷</button><span></span><button id="tdel" title="Oublier cette photo et ses réglages" style="padding:3px 8px">🗑</button><button id="te1" title="Lèvres plus fines" style="padding:3px 8px">Épais. −</button><button id="te2" title="Lèvres plus épaisses" style="padding:3px 8px">Épais. +</button><button id="cfgPic" type="button" title="Importer une photo depuis un fichier" style="padding:3px 8px">🖼️ Importer</button><button id="tdent" type="button" title="Afficher / masquer les dents" style="padding:3px 8px">🦷 Dents : non</button><button id="td1" type="button" title="Dents plus courtes" style="padding:3px 8px">Dents −</button><button id="td2" type="button" title="Dents plus longues" style="padding:3px 8px">Dents +</button></div></div><figcaption>Moi</figcaption><div id="bar"><button id="expBtn" style="padding:3px 8px" title="Exporter l'avatar 3D (.glb) avec les réglages">⬇️ Exporter .glb</button></div><div id="galrow"><div id="gal" class="hid"></div><button id="galSet" type="button" title="Afficher les réglages de l'avatar" aria-label="Réglages de l'avatar" aria-expanded="false">⚙️</button><button id="galCam" type="button" title="Prendre ma photo avec la webcam" aria-label="Webcam">📷</button></div></figure><div id="sbw"><div id="sb" role="search"><label class="seg"><span>Sujet , Thème , Niveau</span><input id="q" placeholder="Histoire, la Révolution française, collège   ⏎" autocomplete="off" enterkeyhint="go" autofocus></label></div><button id="go" title="Valider (touche Entrée)">▶ Valider</button></div><div id="vthumbs" class="hid"></div><div id="tit"><div class="th"><span>Titres des paragraphes</span><b class="tc">0</b></div><div class="tb"><div class="empty">Les titres s’afficheront ici dès que le cours sera généré.</div></div></div><div id="para" class="hid" aria-live="polite"><div class="ph"></div><div class="pb"></div></div><div id="bulle">Bonjour ! Choisissez un niveau et un thème.</div></section>
+<div id="bw"><div id="dots" aria-label="Paragraphes"><span class="dl">Paragraphes</span><span class="dd"></span><b class="dc"></b><button id="quit" class="dq" type="button" title="Quitter : arrêter la lecture et sortir du plein écran" aria-label="Quitter">⏻ Quitter</button></div><section id="board"><h1>Le tableau</h1><p>Écrivez en haut : sujet, thème, niveau (ex : Histoire, la Révolution française, collège), puis appuyez sur Entrée. Le tableau affiche le paragraphe en cours : un clic sur une phrase la fait lire, un clic ailleurs met la lecture en pause ou la reprend, et les flèches ← → permettent de revenir en arrière ou d'avancer.</p></section></div>
+</main></div>
+<script>
+const $=s=>document.querySelector(s);
+const app=$("#app"),board=$("#board"),bulle=$("#bulle");
+let voice=true,run=0;
+// ---- Plein écran (Échap pour revenir) ----
+const isFS=()=>document.fullscreenElement||document.webkitFullscreenElement||app.classList.contains("fs");
+async function enterFS(){const el=document.documentElement;try{if(el.requestFullscreen)await el.requestFullscreen({navigationUI:"hide"});else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();else app.classList.add("fs");}catch(e){app.classList.add("fs");}} // iPhone : pas d'API plein écran → l'appli occupe tout l'écran
+function exitFS(){if(document.fullscreenElement)document.exitFullscreen();else if(document.webkitFullscreenElement&&document.webkitExitFullscreen)document.webkitExitFullscreen();app.classList.remove("fs");}
+$("#full").onclick=()=>isFS()?exitFS():enterFS();
+// ---- Démarrage : PC = plein écran ; tablette / téléphone = écran en paysage automatique, puis plein écran ----
+// (les navigateurs exigent un geste de l'utilisateur : le plein écran part donc au premier « Commencer » / Entrée)
+const IS_TOUCH=matchMedia("(hover:none) and (pointer:coarse)").matches||(navigator.maxTouchPoints>1&&/Android|iPhone|iPad|iPod|Mobile|Tablet|Macintosh/i.test(navigator.userAgent));
+const rotHint=()=>{if(!IS_TOUCH)return;const r=$("#rot");const upd=()=>r.classList.toggle("hid",innerWidth>=innerHeight);upd();addEventListener("resize",upd);};
+async function startFull(){
+ await enterFS();
+ if(IS_TOUCH){const o=screen.orientation;let ok=false;if(o&&o.lock){try{await o.lock("landscape");ok=true;}catch(e){console.warn("orientation :",e);}}if(!ok)rotHint();} // iOS ne permet pas le verrouillage : simple conseil si l'appareil est en portrait
+}
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&screen.orientation&&screen.orientation.unlock){try{screen.orientation.unlock();}catch(_){}}}); // sortie du plein écran : l'écran redevient libre
+{const st=$("#start"),done=()=>{st.classList.add("hid");const q=$("#q");if(q&&!IS_TOUCH)q.focus();};
+ $("#startNote").textContent=IS_TOUCH?"L'écran passera automatiquement en mode paysage puis en plein écran.":"Le cours s'ouvrira en plein écran (Échap pour quitter).";
+ $("#startGo").onclick=async()=>{done();await startFull();};$("#startSkip").onclick=()=>{done();rotHint();};
+ if(document.fullscreenElement||matchMedia("(display-mode: fullscreen)").matches||matchMedia("(display-mode: standalone)").matches)st.classList.add("hid");
+ else setTimeout(()=>{try{$("#startGo").focus();}catch(_){}},50);
+ $("#quit").onclick=()=>{run++;if(pend){pend();pend=null;}try{speechSynthesis.cancel();}catch(_){}PAUSED=false;pzShow(false);talkStop();try{closePlayer(true);}catch(_){}exitFS();
+  $("#startNote").textContent="Lecture arrêtée. Appuyez sur « Reprendre » pour revenir au cours.";$("#startGo").textContent="▶ Reprendre";$("#rot").classList.add("hid");st.classList.remove("hid");try{$("#startGo").focus();}catch(_){}};}
+addEventListener("keydown",e=>{if(e.key==="Escape")exitFS();});
+$("#voix").onclick=()=>{voice=!voice;$("#voix").textContent="🔊 Voix : "+(voice?"oui":"non");if(!voice)speechSynthesis.cancel();};
+// ---- Webcam : ma photo, affichée à côté du tableau ----
+async function captureFace(){
+ const ov=$("#cam"),v=$("#camv"),tx=$("#camt"),wait=ms=>new Promise(r=>setTimeout(r,ms));
+ ov.classList.remove("hid");tx.textContent="Autorisez l'accès à la caméra…";
+ let stream;
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});}
+ catch(e){tx.textContent="Caméra indisponible ou refusée.";console.warn("webcam :",e);await wait(2200);ov.classList.add("hid");return;}
+ v.srcObject=stream;await v.play().catch(()=>{});
+ let go;const manual=new Promise(r=>go=r);$("#camgo").onclick=()=>go("now");$("#camskip").onclick=()=>go("skip");
+ let skip=false;
+ for(let n=3;n>0&&!skip;n--){tx.textContent=`Placez votre visage dans l'ovale, de face — photo dans ${n}…`;
+  const r=await Promise.race([wait(1000).then(()=>null),manual]);if(r==="skip")skip=true;if(r==="now")break;}
+ const W=v.videoWidth,H=v.videoHeight;let url=null;
+ if(!skip&&W){const S=Math.min(W,H),c=document.createElement("canvas");c.width=c.height=Math.min(512,S);
+  c.getContext("2d").drawImage(v,(W-S)/2,(H-S)/2,S,S,0,0,c.width,c.height);url=c.toDataURL("image/jpeg",.9);}
+ stream.getTracks().forEach(t=>t.stop());v.srcObject=null;ov.classList.add("hid");
+ if(url){$("#moiImg").src=url;$("#moi").classList.remove("hid");faceSetup(url);}}
+$("#camBtn").onclick=()=>captureFace();$("#camMini").onclick=()=>$("#camBtn").click();$("#galCam").onclick=()=>$("#camBtn").click();
+// À l'ouverture : photo mémorisée si elle existe, sinon petit choix Webcam / Photo / Réglages (la webcam ne démarre qu'au clic)
+$("#pkCam").onclick=()=>$("#camBtn").click();$("#pkPic").onclick=()=>$("#picBtn").click();$("#pkSet").onclick=()=>$("#setBtn").click();
+const syncPick=()=>$("#pick").classList.toggle("hid",!$("#moi").classList.contains("hid"));
+new MutationObserver(syncPick).observe($("#moi"),{attributes:true,attributeFilter:["class"]});
+setTimeout(()=>{loadSaved();syncPick();},700);
+// ===== Visage animé (lèvres, nez, yeux, sourcils) synchronisé au texte + voix automatique selon le visage =====
+// Détection : face-api.js (68 points + âge/sexe), chargé depuis jsDelivr. Tout reste dans le navigateur.
+const FA="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/";
+let FACE=null,faceP=null,fc,fx,fimg,P0=null,fvc,ocv;
+const fr={m:{j:0,w:0,r:0,br:0,bl:0,nz:0}};
+let T={on:false,txt:"",ci:0,cps:13,t0:0,seg:[],pulse:0,w:-1},CPS=13; // CPS : vitesse de parole mesurée (caractères/s à vitesse 1), affinée phrase après phrase
+function loadFA(){return faceP||(faceP=new Promise((ok,ko)=>{const s=document.createElement("script");s.src=FA+"dist/face-api.js";
+ s.onload=async()=>{try{await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(FA+"model"),faceapi.nets.faceLandmark68Net.loadFromUri(FA+"model"),faceapi.nets.ageGenderNet.loadFromUri(FA+"model")]);ok();}catch(e){ko(e);}};
+ s.onerror=()=>{faceP=null;ko(new Error("face-api indisponible"));};document.head.appendChild(s);}));}
+function delaunay(P){const n=P.length,M=1e5,pts=P.concat([[-M,-M],[M,-M],[0,M]]);
+ const cc=t=>{const[a,b,c]=t.map(i=>pts[i]),d=2*(a[0]*(b[1]-c[1])+b[0]*(c[1]-a[1])+c[0]*(a[1]-b[1])),A=a[0]**2+a[1]**2,B=b[0]**2+b[1]**2,C=c[0]**2+c[1]**2,
+  ux=(A*(b[1]-c[1])+B*(c[1]-a[1])+C*(a[1]-b[1]))/d,uy=(A*(c[0]-b[0])+B*(a[0]-c[0])+C*(b[0]-a[0]))/d;return[ux,uy,(a[0]-ux)**2+(a[1]-uy)**2];};
+ const ek=e=>e[0]<e[1]?e[0]+","+e[1]:e[1]+","+e[0],es=t=>[[t[0],t[1]],[t[1],t[2]],[t[2],t[0]]];
+ let T0=[{t:[n,n+1,n+2],c:cc([n,n+1,n+2])}];
+ for(let i=0;i<n;i++){const p=pts[i],bad=[],keep=[];
+  T0.forEach(o=>((p[0]-o.c[0])**2+(p[1]-o.c[1])**2<o.c[2]?bad:keep).push(o));
+  const E={};bad.forEach(o=>es(o.t).forEach(e=>{const k=ek(e);E[k]=(E[k]||0)+1;}));
+  bad.forEach(o=>es(o.t).forEach(e=>{if(E[ek(e)]===1){const t=[e[0],e[1],i];keep.push({t,c:cc(t)});}}));T0=keep;}
+ return T0.map(o=>o.t).filter(t=>t.every(i=>i<n));}
+function buildMesh(){const W=fc.width,H=fc.height,q=P0,S=Math.hypot(q[16][0]-q[0][0],q[16][1]-q[0][1]);fr.S=S;let k=0;
+ const add=(x,y)=>{k++;q.push([Math.max(0,Math.min(W,x))+k*.013,Math.max(0,Math.min(H,y))+k*.017]);};
+ [17,19,21,22,24,26].forEach(i=>add(q[i][0],q[i][1]-.35*S));[3,6,8,10,13].forEach(i=>add(q[i][0],q[i][1]+.3*S));
+ [[0,0],[W/2+1.3,0],[W,0],[0,H/2+1.3],[W,H/2-1.3],[0,H],[W/2-1.3,H],[W,H]].forEach(p=>add(p[0],p[1]));
+ const cx=q[27][0],cy=q[33][1];fr.cx=cx;fr.z=q.map((p,i)=>{if(i>=68)return 0;const a=(p[0]-cx)/(.62*S),b=(p[1]-cy)/(.95*S),v=Math.max(0,1-a*a-b*b);return .32*S*Math.pow(v,.7)+((i>=27&&i<=35)?.1*S:0);});
+ const mv=new Set([...Array(9).keys()].map(i=>i+4).concat(Array.from({length:51},(_,i)=>i+17)));
+ const tr=delaunay(q);fr.tri=tr;fr.mvT=tr.filter(t=>t.some(i=>mv.has(i)));}
+function drawTri(s,d){const[x0,y0]=s[0],[x1,y1]=s[1],[x2,y2]=s[2],[u0,v0]=d[0],[u1,v1]=d[1],[u2,v2]=d[2],den=x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1);if(Math.abs(den)<1e-6)return;
+ const A=(u0*(y1-y2)+u1*(y2-y0)+u2*(y0-y1))/den,B=(v0*(y1-y2)+v1*(y2-y0)+v2*(y0-y1))/den,C=(u0*(x2-x1)+u1*(x0-x2)+u2*(x1-x0))/den,E=(v0*(x2-x1)+v1*(x0-x2)+v2*(x1-x0))/den,
+  F=(u0*(x1*y2-x2*y1)+u1*(x2*y0-x0*y2)+u2*(x0*y1-x1*y0))/den,G=(v0*(x1*y2-x2*y1)+v1*(x2*y0-x0*y2)+v2*(x0*y1-x1*y0))/den;
+ const cx=(u0+u1+u2)/3,cy=(v0+v1+v2)/3;fx.save();fx.beginPath();
+ d.forEach(([u,v],k)=>{const l=Math.hypot(u-cx,v-cy)||1,X=u+(u-cx)/l*.8,Y=v+(v-cy)/l*.8;k?fx.lineTo(X,Y):fx.moveTo(X,Y);});fx.closePath();fx.clip();
+ fx.setTransform(A,B,C,E,F,G);const bx=Math.floor(Math.min(x0,x1,x2))-1,by=Math.floor(Math.min(y0,y1,y2))-1,bw=Math.ceil(Math.max(x0,x1,x2))-bx+2,bh=Math.ceil(Math.max(y0,y1,y2))-by+2;
+ fx.drawImage(fimg,bx,by,bw,bh,bx,by,bw,bh);fx.restore();}
+// ---- Lèvres : lettre → [ouverture, largeur, arrondi] ----
+const VZ={};const setV=(cs,v)=>[...cs].forEach(c=>VZ[c]=v);
+setV("aàâ",[.9,.2,0]);setV("eœ",[.35,0,.35]);setV("éèêë",[.45,.5,0]);setV("iîïy",[.2,.9,0]);setV("oôö",[.5,-.1,.8]);setV("uùûü",[.2,-.3,1]);
+setV("mbp",[0,0,0]);setV("fv",[.1,.1,0]);setV("stdnlrzcjç",[.18,.3,0]);setV("gkqhxw",[.28,0,.1]);
+// ---- Moteur de visèmes « pro » : texte → phonèmes (français) → visèmes pondérés dans le temps, recalés sur chaque mot dit ----
+const V={A:[.95,.2,0],E:[.45,.55,0],I:[.2,.95,0],O:[.55,-.1,.8],U:[.2,-.35,1],Q:[.38,0,.4],N:[.2,.3,0],B:[0,0,0],F:[.12,.1,0,1],K:[.3,0,.1],S:[.14,.5,0],R:[.3,-.1,.6],_:[0,0,0],"-":[.07,0,0]};
+const G2P=[[/eau|au/g,"O"],[/oi/g,"UA"],[/ou|où|oû/g,"U"],[/ai|ei|é|è|ê|ë/g,"E"],[/eu|œu|œ/g,"Q"],[/ain|ein|in|im|un|ym/g,"E"],[/an|am|en|em/g,"A"],[/on|om/g,"O"],[/ch|j|ge|gi/g,"R"],[/ph|f|v/g,"F"],[/qu|k|c|g|h|x|q/g,"K"],[/m|b|p/g,"B"],[/s|z|t|d|l|n|r|ç/g,"N"],[/a|à|â/g,"A"],[/o|ô|ö/g,"O"],[/i|î|ï|y/g,"I"],[/u|ù|û|ü/g,"U"],[/e/g,"Q"]];
+function visemes(w){w=w.toLowerCase();if(w.length>3)w=w.replace(/(er|ez)$/,"É").replace(/([^aeiouyàâéèêëîïôöûùü])(es|ent|e)$/,"$1").replace(/([aeiouyéèêàâîôû])[stdxzp]$/,"$1");
+ let r=w;G2P.forEach(([x,y])=>r=r.replace(x,y));return[...r].map(c=>c==="É"?"E":V[c]?c:"Q");}
+function talkStart(t,rate,cps){cps=cps||CPS;const ev=[],ws=[],txt=t.toLowerCase();let cum=0,ss=0;
+ for(const m of txt.matchAll(/[\p{L}\p{N}'’-]+|[,;:.!?]/gu)){const tk=m[0],ci=m.index;
+  if(/^[,;:.!?]$/.test(tk)){const big=/[.!?]/.test(tk);if(ev.length)ev[ev.length-1].s=1;ev.push({v:"_",w:big?4:2.2,pause:big});
+   if(big){for(let i=ss;i<ev.length;i++)ev[i].q=tk;ss=ev.length;}continue;}
+  ws.push({ci,k:ev.length});visemes(tk).forEach(c=>ev.push({v:c,w:/[AEIOUQ]/.test(c)?1:.55}));ev.push({v:"-",w:.25});}
+ const cu=ev.map(e=>{const c=cum;cum+=e.w;return c;});
+ T={on:true,ev,cu,ws,tot:cum,pos:0,k:0,u:(txt.length/(cps*rate))/Math.max(cum,1),t0:performance.now(),pulse:0,bk:-1};}
+function talkStop(){T.on=false;}
+function talkSync(ci){if(!T.on||!T.ws)return;let w=null;for(const x of T.ws)if(x.ci<=ci)w=x;if(!w)return;T.pos=T.cu[w.k];T.k=w.k;
+ const el=(performance.now()-T.t0)/1000;if(el>.8&&T.pos>2)T.u=T.u*.5+(el/T.pos)*.5;}
+// Dents « dentiste » : arcade supérieure de 10 dents (incisives centrales > latérales plus courtes et arrondies > canines pointues > prémolaires en retrait),
+// teintes cervicale jaunâtre / corps blanc / bord incisif translucide bleuté, arrondi vertical, reflet, ombre vers les coins ; arcade inférieure plus petite et plus grise
+const TEETH={K:["p","p","k","l","i","i","l","k","p","p"],W:[.6,.76,.9,.76,1,1,.76,.9,.76,.6],L:[.7,.8,.96,.88,1,1,.88,.96,.8,.7],
+ KL:["p","l","i","i","i","i","l","p"],WL:[.7,.62,.6,.58,.58,.6,.62,.7],LL:[.8,.85,.85,.85,.85,.85,.85,.8]};
+function drawTeeth(D0,op,S){const c0=[(D0[60][0]+D0[64][0])/2,(D0[60][1]+D0[64][1])/2],an=Math.atan2(D0[64][1]-D0[60][1],D0[64][0]-D0[60][0]),cq=Math.cos(-an),sq=Math.sin(-an),D=D0.map(p=>[(p[0]-c0[0])*cq-(p[1]-c0[1])*sq,(p[0]-c0[0])*sq+(p[1]-c0[1])*cq]);fx.save();fx.translate(c0[0],c0[1]);fx.rotate(an);
+ const sc=fc.width/512,xa=D[60][0],xb=D[64][0],ins=(xb-xa)*.06,tw=fr.tw||1,L=(xb-xa-2*ins)*tw,xm=(xa+xb)/2,tk=fr.tk||1;
+ const ln=ids=>{const P=ids.map(i=>D[i]);return x=>{for(let i=0;i<4;i++)if(x<=P[i+1][0]||i===3){const t=(x-P[i][0])/((P[i+1][0]-P[i][0])||1);return P[i][1]+(P[i+1][1]-P[i][1])*Math.max(0,Math.min(1,t));}};},yU=ln([60,61,62,63,64]),yL=ln([60,67,66,65,64]);
+ if(op>.09*S){fx.fillStyle="rgba(168,78,82,.92)";fx.beginPath();fx.ellipse((xa+xb)/2,D[66][1]-op*.12,(xb-xa)*.26,op*.26,0,0,Math.PI*2);fx.fill();}
+ const tooth=(x0,x1,yt,len,kind,side,e,sh)=>{const w=x1-x0,t0=yt(x0),t1=yt(x1),tm=Math.min(t0,t1),yb=Math.max(t0,t1)+len,rm=w*(kind==="i"?.06:kind==="l"?.1:.3),rd=w*(kind==="i"?.15:kind==="l"?.28:.3),rL=side<0?rd:rm,rR=side<0?rm:rd;
+  fx.beginPath();fx.moveTo(x0,t0);fx.lineTo(x1,t1);
+  if(kind==="k"){fx.lineTo(x1,yb-len*.3);fx.lineTo(x0+w*(side<0?.56:.44),yb);fx.lineTo(x0,yb-len*.3);}
+  else{fx.lineTo(x1,yb-rR);fx.quadraticCurveTo(x1,yb,x1-rR,yb);fx.quadraticCurveTo((x0+x1)/2,yb+len*.05,x0+rL,yb);fx.quadraticCurveTo(x0,yb,x0,yb-rL);}
+  fx.closePath();let g=fx.createLinearGradient(0,tm,0,yb);[[0,"#cdbf9b"],[.22,"#eee5ce"],[.55,"#f7f1e1"],[.86,"#f1f1ec"],[1,"#d6dfe3"]].forEach(([o,c])=>g.addColorStop(o,c));fx.fillStyle=g;fx.fill();
+  g=fx.createLinearGradient(x0,0,x1,0);[[0,"rgba(90,70,40,.3)"],[.2,"rgba(90,70,40,0)"],[.45,"rgba(255,255,255,.16)"],[.8,"rgba(90,70,40,0)"],[1,"rgba(90,70,40,.3)"]].forEach(([o,c])=>g.addColorStop(o,c));fx.fillStyle=g;fx.fill();
+  fx.fillStyle="rgba(40,15,15,"+(.04+.5*e*e+sh)+")";fx.fill();fx.strokeStyle="rgba(60,40,30,.35)";fx.lineWidth=.6*sc;fx.stroke();
+  fx.fillStyle="rgba(255,255,255,.26)";fx.beginPath();fx.ellipse(x0+w*.36,tm+(yb-tm)*.5,w*.07,(yb-tm)*.28,0,0,Math.PI*2);fx.fill();};
+ const arch=(yt,xs,Ls,kinds,wd,lg,hm,sh)=>{const tot=wd.reduce((a,b)=>a+b,0),h=(wd.length-1)/2;let x=xs;wd.forEach((w,j)=>{const a=x+.35*sc,b=x+w/tot*Ls-.35*sc;x+=w/tot*Ls;tooth(a,b,yt,hm*lg[j],kinds[j],j<wd.length/2?-1:1,Math.abs(j-h)/h,sh);});};
+ arch(yU,xm-L/2,L,TEETH.K,TEETH.W,TEETH.L,Math.min(op*.55,.045*S*tk),0);
+ const tl=Math.min(Math.max(0,(op-.07*S)*.6),.028*S*tk);
+ if(tl>1){const Y0=D[66][1],Ls=L*.78;fx.save();fx.transform(1,0,0,-1,0,2*Y0);arch(x=>2*Y0-yL(x),xm-Ls/2,Ls,TEETH.KL,TEETH.WL,TEETH.LL,tl,.1);fx.restore();}
+ fx.restore();}
+function frame(now){requestAnimationFrame(frame);if(!P0||!fr.mvT)return;const dt=Math.min(.05,(now-(fr.t||now))/1000);fr.t=now;const m=fr.m,S=fr.S;
+ let tg=[0,0,0,0],brT=.05*Math.sin(now/1100);
+ if(T.on&&T.ev&&T.ev.length){T.pos+=dt/T.u;let k=T.k;const E=T.ev,C=T.cu;while(k+1<E.length&&C[k+1]<=T.pos)k++;while(k>0&&C[k]>T.pos)k--;
+  if(k!==T.k){T.k=k;if(E[k].s)T.pulse=.9;if(E[k].pause&&T.bk!==k){T.bk=k;fr.nb=now;}}
+  const e=E[k],p=Math.min(1,(T.pos-C[k])/e.w),a=V[e.v],b=V[(E[k+1]||e).v],tt=(e.v==="B"||p<.55)?0:(p-.55)/.45*.5;
+  tg=[0,1,2].map(i=>a[i]+((b[i]||0)-a[i])*tt);tg[3]=a[3]||0;if(T.pos>=T.tot)tg=[0,0,0,0];brT+=e.q==="?"?.5:e.q==="!"?.7:.1;}
+ if(!T.on&&AUD.on&&VMODE){tg=AUD.tick(dt);brT+=AUD.lvl*.3;}
+ T.pulse=Math.max(0,(T.pulse||0)-dt*2.5);
+ const ko=1-Math.exp(-dt*(tg[0]>m.j?22:34)),kw=1-Math.exp(-dt*18);m.f=m.f||0;
+ m.j+=(tg[0]-m.j)*ko;m.w+=(tg[1]-m.w)*kw;m.r+=(tg[2]-m.r)*kw;m.f+=(tg[3]-m.f)*kw;m.br+=((brT+T.pulse*.6)-m.br)*(1-Math.exp(-dt*8));
+ if(!fr.nb)fr.nb=now+2000;if(now>fr.nb){fr.b0=now;fr.nb=now+2200+Math.random()*3800;}
+ const bt=(now-(fr.b0||-1e9))/150;m.bl=bt>=0&&bt<=1?Math.sin(Math.PI*bt):0;
+ m.nz=.12+.1*Math.sin(now/600)+.5*m.j;
+ const q=P0,D=q.map(p=>p.slice()),mv=(i,dx,dy)=>{D[i][0]+=dx;D[i][1]+=dy;},jo=m.j*.12*S*((fr.ma&&fr.ma.h)||100)/100,sx=1+.12*m.w-.22*m.r,cx=(q[48][0]+q[54][0])/2;
+ for(let i=48;i<=67;i++)D[i][0]=cx+(q[i][0]-cx)*sx;
+ [56,57,58,65,66,67].forEach(i=>mv(i,0,jo));[55,59].forEach(i=>mv(i,0,jo*.8));[48,54,60,64].forEach(i=>mv(i,0,jo*.3));[49,50,51,52,53,61,62,63].forEach(i=>mv(i,0,-jo*.12));
+ [56,57,58,65,66,67].forEach(i=>mv(i,0,-m.f*.035*S));for(let i=4;i<=12;i++)mv(i,0,jo*.9*Math.max(0,1-Math.abs(i-8)/4.5));
+ [[37,41],[38,40],[43,47],[44,46]].forEach(([u,l])=>{const h=q[l][1]-q[u][1];mv(u,0,h*m.bl*.95);mv(l,0,-h*m.bl*.1);});
+ const BW=[.5,.8,1,1,.9,.9,1,1,.8,.5];for(let i=17;i<=26;i++)mv(i,0,-m.br*.05*S*BW[i-17]);
+ for(let i=31;i<=35;i++)mv(i,(i-33)*.5*m.nz*.02*S,-m.nz*.008*S);
+ {const ar=((fr.ma&&fr.ma.r)||0)*Math.PI/180;if(ar){const c2=Math.cos(ar),s2=Math.sin(ar);for(let i=4;i<=67;i++){if(i>12&&i<48)continue;const dx=D[i][0]-q[i][0],dy=D[i][1]-q[i][1];D[i][0]=q[i][0]+dx*c2-dy*s2;D[i][1]=q[i][1]+dx*s2+dy*c2;}}}
+ const th=(Math.sin(now/1000*.7)*7+Math.sin(now/1000*1.9)*2.5)*(fr.hm||0)*Math.PI/180,ct=Math.cos(th),sn=Math.sin(th);
+ D.forEach((d,i)=>{const z=fr.z[i],w=Math.min(1,z/(.1*S));d[0]+=(fr.cx+(q[i][0]-fr.cx)*ct-q[i][0])*w+z*sn;});
+ fx.setTransform(1,0,0,1,0,0);fx.drawImage(fimg,0,0,fc.width,fc.height);
+ fr.tri.forEach(t=>drawTri(t.map(i=>q[i]),t.map(i=>D[i])));
+ const op=D[66][1]-D[62][1];
+ if(op>1.5){fx.save();fx.beginPath();[60,61,62,63,64,65,66,67].forEach((i,n)=>n?fx.lineTo(D[i][0],D[i][1]):fx.moveTo(D[i][0],D[i][1]));fx.closePath();fx.clip();
+  const lp=fr.lip||[120,50,50],sh=k=>"rgb("+lp.map(c=>Math.round(c*k)).join(",")+")",gr=fx.createLinearGradient(0,D[62][1],0,D[66][1]);gr.addColorStop(0,sh(.22));gr.addColorStop(.5,sh(.34));gr.addColorStop(1,sh(.5));fx.fillStyle=gr;fx.fill();if(fr.teeth)drawTeeth(D,op,S);fx.beginPath();[60,61,62,63,64,65,66,67].forEach((i,n)=>n?fx.lineTo(D[i][0],D[i][1]):fx.moveTo(D[i][0],D[i][1]));fx.closePath();fx.strokeStyle=sh(.75);fx.lineWidth=1.2*fc.width/512;fx.stroke();fx.restore();}
+ if((fr.show||0)>now){fx.save();fx.setTransform(1,0,0,1,0,0);fx.strokeStyle="#00e5ff";fx.lineWidth=1.5*fc.width/512;[[48,59],[60,67]].forEach(([a,b])=>{fx.beginPath();for(let i=a;i<=b;i++)i===a?fx.moveTo(D[i][0],D[i][1]):fx.lineTo(D[i][0],D[i][1]);fx.closePath();fx.stroke();});fx.restore();}
+ if(uiOn&&(dragH||(fr.show||0)>now)){const sc=fc.width/512;fx.save();fx.setTransform(1,0,0,1,0,0);[48,54,51,57].forEach(i=>{const[hx,hy]=q[i],on=dragH&&dragH.i===i;fx.beginPath();fx.arc(hx,hy,(on?6:4.5)*sc,0,6.2832);fx.fillStyle=on?"#ffd54f":"#00e5ffcc";fx.fill();fx.lineWidth=1.5*sc;fx.strokeStyle="#fff";fx.stroke();});teethH().forEach(h=>{const on=dragH&&dragH.k===h.k;fx.beginPath();fx.moveTo(h.x,h.y-6.5*sc);fx.lineTo(h.x+6.5*sc,h.y);fx.lineTo(h.x,h.y+6.5*sc);fx.lineTo(h.x-6.5*sc,h.y);fx.closePath();fx.fillStyle=on?"#ffd54f":"#ffffffe6";fx.fill();fx.lineWidth=1.5*sc;fx.strokeStyle="#e91e63";fx.stroke();});fx.restore();}
+ // ---- Mouvement de la tête : hochements, roulis et balancement, plus marqués quand il parle, accent sur les mots importants ----
+ const W=fc.width,H=fc.height,sc=W/512,t=now/1000;fr.hm=(fr.show||0)>now?0:(fr.hm||0)+(((T.on||(AUD.on&&VMODE&&AUD.lvl>.08))?1:.3)-(fr.hm||0))*(1-Math.exp(-dt*3));
+ const ang=(Math.sin(t*1.7)*1.4+Math.sin(t*.9)+T.pulse*1.2)*fr.hm*Math.PI/180,tx=Math.sin(t*1.1)*3*fr.hm*sc,ty=(Math.sin(t*2.3)*2.2+T.pulse*4)*fr.hm*sc,px=q[8][0],py=Math.min(H*.88,q[8][1]+.5*S);
+ fvc.setTransform(1,0,0,1,0,0);fvc.clearRect(0,0,W,H);fvc.translate(px+tx,py+ty);fvc.rotate(ang);fvc.scale(1.1,1.1);fvc.translate(-px,-py);fvc.drawImage(ocv,0,0);}
+function tplFace(N){const u=.3*N,cx=.5*N,ey=.42*N,L=[],P=(x,y)=>L.push([cx+x*u,ey+y*u]);
+ for(let i=0;i<17;i++){const t=(i-8)/8;P(Math.sin(t*Math.PI/2),.2+1.35*(1-t*t));}
+ for(let i=0;i<5;i++)P(-.8+i*.16,-.28-.06*Math.sin(i/4*Math.PI));for(let i=0;i<5;i++)P(.16+i*.16,-.28-.06*Math.sin((1-i/4)*Math.PI));
+ [0,.2,.4,.6].forEach(y=>P(0,y));[-.22,-.11,0,.11,.22].forEach(x=>P(x,.82));
+ [[-.65,0],[-.52,-.07],[-.33,-.07],[-.2,0],[-.33,.07],[-.52,.07],[.2,0],[.33,-.07],[.52,-.07],[.65,0],[.52,.07],[.33,.07]].forEach(q=>P(q[0],q[1]));
+ [[-.42,0],[-.28,-.1],[-.12,-.17],[0,-.14],[.12,-.17],[.28,-.1],[.42,0],[.28,.12],[.12,.2],[0,.22],[-.12,.2],[-.28,.12],[-.3,0],[-.14,-.06],[0,-.07],[.14,-.06],[.3,0],[.14,.07],[0,.08],[-.14,.07]].forEach(q=>P(q[0],q[1]+1.25));
+ return L;}
+// Affinage de la bouche : la fente entre les lèvres = la rangée la plus sombre au centre de la bouche (corrige le décalage des points du détecteur)
+function refineMouth(){const q=P0,S=Math.hypot(q[16][0]-q[0][0],q[16][1]-q[0][1]);if(q[66][1]-q[62][1]>.04*S)return;
+ const xa=Math.round(q[61][0]),xb=Math.round(q[63][0]),ya=Math.round(q[51][1]),yb=Math.round(q[57][1]);if(xb-xa<3||yb-ya<6)return;
+ fx.setTransform(1,0,0,1,0,0);fx.drawImage(fimg,0,0,fc.width,fc.height);
+ const d=fx.getImageData(xa,ya,xb-xa+1,yb-ya+1),w=d.width,h=d.height;let best=-1,bv=1e9;
+ for(let y=Math.floor(.15*h);y<Math.ceil(.85*h);y++){let sum=0;for(let x=0;x<w;x++){const i=(y*w+x)*4;sum+=.3*d.data[i]+.59*d.data[i+1]+.11*d.data[i+2];}sum/=w;if(sum<bv){bv=sum;best=y;}}
+ if(best<0)return;const ym=ya+best;if(Math.abs(ym-(q[62][1]+q[66][1])/2)>.06*S)return;
+ const yc=(ym+(q[48][1]+q[54][1])/2)/2;q[62][1]=ym-.5;q[66][1]=ym+.5;q[61][1]=q[63][1]=ym-.3;q[65][1]=q[67][1]=ym+.3;q[60][1]=q[64][1]=yc;}
+// Couleur des lèvres échantillonnée sur la photo (milieu de la lèvre haute et basse) → teinte de l'intérieur de bouche
+function sampleLip(){const q=P0;fx.setTransform(1,0,0,1,0,0);fx.drawImage(fimg,0,0,fc.width,fc.height);let r=0,g=0,b=0,n=0;
+ [[(q[51][0]+q[62][0])/2,q[51][1]*.4+q[62][1]*.6],[(q[57][0]+q[66][0])/2,q[57][1]*.4+q[66][1]*.6]].forEach(([x,y])=>{const d=fx.getImageData(Math.round(x)-2,Math.round(y)-1,5,3).data;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}});
+ if(n)fr.lip=[r/n,g/n,b/n];}
+// Réglage manuel : on déplace / élargit les points de la bouche, le maillage est reconstruit
+function applyMouth(){if(!fr.raw)return;const a=fr.ma||{x:0,y:0,s:100},R=fr.raw,S0=Math.hypot(R[16][0]-R[0][0],R[16][1]-R[0][1]);
+ P0=R.map(p=>p.slice());const cx=(P0[48][0]+P0[54][0])/2,cy=(R[51][1]+R[57][1])/2;
+ const ar=(a.r||0)*Math.PI/180,ca=Math.cos(ar),sa=Math.sin(ar);for(let i=48;i<=67;i++){const dx=(P0[i][0]-cx)*a.s/100,dy=(P0[i][1]-cy)*(a.h||100)/100;P0[i][0]=cx+dx*ca-dy*sa+a.x*S0/100;P0[i][1]=cy+dx*sa+dy*ca+a.y*S0/100;}
+ {const tt=((a.t||100)-100)/100*S0*.035,wL=[.55,.9,1,.9,.55];if(tt)for(let k=0;k<5;k++){const d=tt*wL[k]; // contour extérieur : 49–53 = lèvre haute, 55–59 = lèvre basse
+   P0[49+k][0]+=d*sa;P0[49+k][1]-=d*ca;P0[55+k][0]-=d*sa;P0[55+k][1]+=d*ca;}}
+ buildMesh();sampleLip();saveSet();}
+// Placement à la souris : clic / glisser sur la photo = centre de la bouche ; molette = largeur (la tête est figée pendant le réglage)
+function mouthTo(e){const c=fc,r=c.getBoundingClientRect(),bd=c.clientLeft,W=c.width,H=c.height,q=P0,S=fr.S,px=q[8][0],py=Math.min(H*.88,q[8][1]+.5*S),
+ X=(e.clientX-r.left-bd)/(r.width-2*bd)*W,Y=(e.clientY-r.top-bd)/(r.height-2*bd)*H,x=px+(X-px)/1.1,y=py+(Y-py)/1.1,R=fr.raw,S0=Math.hypot(R[16][0]-R[0][0],R[16][1]-R[0][1]),a=fr.ma||(fr.ma={x:0,y:0,s:100});
+ a.x=Math.max(-30,Math.min(30,(x-(R[48][0]+R[54][0])/2)/S0*100));a.y=Math.max(-30,Math.min(30,(y-(R[51][1]+R[57][1])/2)/S0*100));fr.show=performance.now()+2500;applyMouth();}
+const MA0=()=>({x:0,y:0,s:35,h:45,r:0,t:100,v:2}); // bouche très très petite par défaut
+const mW=f=>{if(!fr.raw)return;const a=fr.ma||(fr.ma={x:0,y:0,s:100});a.s=Math.max(15,Math.min(180,a.s*f));fr.show=performance.now()+2500;applyMouth();};
+// ----- Poignées à la souris (panneau ouvert) : coins de la bouche = largeur ; haut / bas des lèvres = épaisseur -----
+let dragH=null;
+function cvPt(e){const c=fc,r=c.getBoundingClientRect(),bd=c.clientLeft,W=c.width,H=c.height,q=P0,S=fr.S,px=q[8][0],py=Math.min(H*.88,q[8][1]+.5*S),kx=(r.width-2*bd)/W,ky=(r.height-2*bd)/H,
+ X=(e.clientX-r.left-bd)/kx,Y=(e.clientY-r.top-bd)/ky;return{x:px+(X-px)/1.1,y:py+(Y-py)/1.1,u:1/(1.1*kx)};} // coordonnées dans le repère du visage + taille d'un pixel écran
+const HND=[{k:"wl",i:48},{k:"wr",i:54},{k:"tu",i:51},{k:"tl",i:57}];
+// Dents : poignées ◆ (dl = longueur, wd = largeur de l'arcade), dans le repère de la bouche (suit l'orientation)
+function teethG(){const a=P0[60],b=P0[64],w=Math.hypot(b[0]-a[0],b[1]-a[1])||1,ux=(b[0]-a[0])/w,uy=(b[1]-a[1])/w;return{w,ux,uy,nx:-uy,ny:ux,cx:(a[0]+b[0])/2,cy:(a[1]+b[1])/2,bx:P0[62][0],by:P0[62][1]};}
+function teethH(){if(!P0||!fr.teeth)return[];const G=teethG(),S=fr.S,tk=fr.tk||1,tw=fr.tw||1;
+ return[{k:"dl",x:G.bx+G.nx*.045*S*tk,y:G.by+G.ny*.045*S*tk},{k:"wd",x:G.cx+G.ux*G.w*.44*tw+G.nx*.02*S,y:G.cy+G.uy*G.w*.44*tw+G.ny*.02*S}];}
+function hitH(e){if(!P0)return null;const p=cvPt(e);let b=null,bd=16*p.u;for(const h of HND){const d=Math.hypot(P0[h.i][0]-p.x,P0[h.i][1]-p.y);if(d<=bd){bd=d;b={k:h.k,i:h.i,gx:p.x-P0[h.i][0],gy:p.y-P0[h.i][1]};}}for(const h of teethH()){const d=Math.hypot(h.x-p.x,h.y-p.y);if(d<=bd){bd=d;b={k:h.k,i:-1,gx:p.x-h.x,gy:p.y-h.y};}}return b;}
+function dragHandle(e){const p=cvPt(e),h=dragH,a=fr.ma||(fr.ma={x:0,y:0,s:100}),R=fr.raw,S0=Math.hypot(R[16][0]-R[0][0],R[16][1]-R[0][1]),
+ ar=(a.r||0)*Math.PI/180,ca=Math.cos(ar),sa=Math.sin(ar),tx=p.x-h.gx,ty=p.y-h.gy; // cible de la poignée = souris moins le décalage de saisie
+ if(h.k==="dl"||h.k==="wd"){const G=teethG();
+  if(h.k==="dl")fr.tk=Math.max(.4,Math.min(3,((tx-G.bx)*G.nx+(ty-G.by)*G.ny)/(.045*fr.S)));
+  else fr.tw=Math.max(.5,Math.min(1.15,((tx-G.cx)*G.ux+(ty-G.cy)*G.uy)/(G.w*.44)));
+  fr.show=performance.now()+2500;saveSet();return;}
+ if(h.k==="wl"||h.k==="wr"){const cx=(P0[48][0]+P0[54][0])/2,cy=(P0[48][1]+P0[54][1])/2,pr=(tx-cx)*ca+(ty-cy)*sa,w0=Math.max(1,(R[54][0]-R[48][0])/2);
+  a.s=Math.max(15,Math.min(180,100*(h.k==="wr"?pr:-pr)/w0));}
+ else{const c0=S0*.035,dx=tx-P0[h.i][0],dy=ty-P0[h.i][1],sh=h.k==="tu"?dx*sa-dy*ca:-dx*sa+dy*ca,tt=((a.t||100)-100)/100*c0+sh;
+  a.t=Math.max(55,Math.min(240,100+tt/c0*100));}
+ fr.show=performance.now()+2500;applyMouth();}
+{const c=$("#moiCv");let drag=false;
+ c.onpointerdown=e=>{if(!fr.raw||!uiOn)return;c.setPointerCapture(e.pointerId);const h=hitH(e);if(h)dragH=h;else{drag=true;mouthTo(e);}e.preventDefault();};
+ c.onpointermove=e=>{if(dragH){dragHandle(e);return;}if(drag){mouthTo(e);return;}if(fr.raw&&uiOn){fr.show=performance.now()+800;const h=hitH(e);c.style.cursor=h?(h.k[0]==="w"?"ew-resize":"ns-resize"):"crosshair";}};
+ c.onpointerup=c.onpointercancel=()=>{drag=false;dragH=null;};
+ c.addEventListener("wheel",e=>{if(!fr.raw||!uiOn)return;e.preventDefault();const d=e.deltaY||e.deltaX,f=Math.exp(-d*.0012);e.altKey?mR(-d*.03):e.shiftKey?mH(f):e.ctrlKey?mE(f):mW(f);},{passive:false});}
+const mR=g=>{if(!fr.raw)return;const a=fr.ma||(fr.ma={x:0,y:0,s:100});a.r=Math.max(-45,Math.min(45,(a.r||0)+g));fr.show=performance.now()+2500;applyMouth();};
+$("#mr1").onclick=()=>mR(-3);$("#mr2").onclick=()=>mR(3);
+const mH=f=>{if(!fr.raw)return;const a=fr.ma||(fr.ma={x:0,y:0,s:100});a.h=Math.max(20,Math.min(220,(a.h||100)*f));fr.show=performance.now()+2500;applyMouth();};
+$("#mh1").onclick=()=>mH(.93);$("#mh2").onclick=()=>mH(1.07);
+const mE=f=>{if(!fr.raw)return;const a=fr.ma||(fr.ma={x:0,y:0,s:100});a.t=Math.max(55,Math.min(240,(a.t||100)*f));fr.show=performance.now()+2500;applyMouth();}; // épaisseur des lèvres
+$("#te1").onclick=()=>mE(.88);$("#te2").onclick=()=>mE(1.14);
+$("#mw1").onclick=()=>mW(.93);$("#mw2").onclick=()=>mW(1.07);
+$("#mrz").onclick=()=>{fr.ma=MA0();fr.show=performance.now()+1500;applyMouth();};
+function tdLab(){const b=$("#tdent");if(b)b.textContent="🦷 Dents : "+(fr.teeth?"oui":"non");}
+$("#tdent").onclick=()=>{if(!fr.raw)return;fr.teeth=!fr.teeth;fr.show=performance.now()+2500;tdLab();saveSet();};
+function mT(f){if(!fr.raw)return;fr.tk=Math.max(.4,Math.min(3,(fr.tk||1)*f));fr.teeth=true;fr.show=performance.now()+2500;tdLab();saveSet();}
+$("#td1").onclick=()=>mT(.88);$("#td2").onclick=()=>mT(1.14);
+// ---- Mémoire : photo + réglages (bouche, dents) conservés dans le navigateur (localStorage), 8 photos maximum ----
+const LS="prof_photos_v1",store={get(){try{return JSON.parse(localStorage.getItem(LS))||{list:[],last:null};}catch(e){return{list:[],last:null};}},set(o){try{localStorage.setItem(LS,JSON.stringify(o));}catch(e){console.warn("mémoire pleine ou bloquée",e);}}};
+const hashStr=t=>{let h=2166136261;for(let i=0;i<t.length;i+=7){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36)+t.length;};
+let svT;const saveSet=()=>{clearTimeout(svT);svT=setTimeout(()=>{if(!fr.id)return;const st=store.get(),e=st.list.find(x=>x.id===fr.id);if(!e)return;e.ma=fr.ma;e.tk=fr.tk;e.tw=fr.tw;e.teeth=fr.teeth===true;store.set(st);},400);};
+function gal(){const st=store.get(),g=$("#gal");g.innerHTML="";st.list.forEach(e=>{const i=new Image();i.src=e.url;i.title="Charger cette photo avec ses réglages";if(e.id===fr.id)i.className="on";i.onclick=()=>loadSaved(e.id);g.appendChild(i);});g.classList.toggle("hid",!st.list.length);}
+function keepPhoto(url){const st=store.get();let e=st.list.find(x=>x.id===fr.id)||{id:fr.id};e.url=url;e.ma=fr.ma;e.tk=fr.tk;e.tw=fr.tw;e.teeth=fr.teeth===true;st.list=[e,...st.list.filter(x=>x.id!==fr.id)].slice(0,8);st.last=fr.id;store.set(st);gal();}
+function loadSaved(id){const st=store.get(),e=id?st.list.find(x=>x.id===id):(st.list.find(x=>x.id===st.last)||st.list[0]);if(!e)return false;$("#moiImg").src=e.url;$("#moi").classList.remove("hid");faceSetup(e.url);return true;}
+$("#tdel").onclick=()=>{const st=store.get();st.list=st.list.filter(x=>x.id!==fr.id);st.last=st.list[0]?st.list[0].id:null;store.set(st);gal();};
+async function faceSetup(url){
+ const cap=$("#moi figcaption"),fig=$("#moi");P0=null;FACE=null;fig.classList.remove("live");setUI(uiOn);
+ const im=new Image();im.src=url;await im.decode().catch(()=>{});fimg=im;
+ fc=$("#moiCv");fc.width=im.naturalWidth||512;fc.height=im.naturalHeight||512;fvc=fc.getContext("2d");ocv=document.createElement("canvas");ocv.width=fc.width;ocv.height=fc.height;fx=ocv.getContext("2d");
+ cap.textContent="Analyse du visage…";let r=null,err="";
+ const run=()=>faceapi.detectSingleFace(im,new faceapi.TinyFaceDetectorOptions({inputSize:416,scoreThreshold:.25})).withFaceLandmarks().withAgeAndGender();
+ try{await loadFA();try{r=await run();}catch(e){console.warn("visage (webgl) :",e);await faceapi.tf.setBackend("cpu");await faceapi.tf.ready();r=await run();}}
+ catch(e){faceP=null;err=String(e&&e.message||e);console.warn("visage :",e);}
+ if(r){FACE={age:r.age,gender:r.gender};P0=r.landmarks.positions.map(p=>[p.x,p.y]);refineMouth();}
+ else{P0=tplFace(fc.width);cap.textContent="Moi · animation approximative ("+(err?err.slice(0,60):"visage non détecté")+") · voix par défaut";}
+ fr.raw=P0.map(p=>p.slice());fr.id=hashStr(url);{const sv=store.get().list.find(x=>x.id===fr.id);fr.ma=sv&&sv.ma?(sv.ma.v===2?sv.ma:Object.assign({},sv.ma,{s:35,h:45,t:100,v:2})):MA0();fr.tk=(sv&&sv.tk)||1;fr.tw=(sv&&sv.tw)||1;fr.teeth=!!(sv&&sv.teeth===true);}tdLab();applyMouth();keepPhoto(url);fig.classList.add("live");setUI(uiOn);
+ if(r){const kid=FACE.age<13,h=r.gender==="male";cap.textContent="Moi · "+(kid?(h?"garçon":"fille"):(h?"homme":"femme"))+" ~"+Math.round(FACE.age)+" ans · voix auto"+(P0[66][1]-P0[62][1]>.045*fr.S?" · bouche ouverte sur la photo : préférez bouche fermée":"");}
+ if(!fr.run){fr.run=1;requestAnimationFrame(frame);}}
+$("#picBtn").onclick=()=>$("#picIn").click();$("#cfgPic").onclick=()=>$("#picIn").click();
+// Recadrage « pro » : détecte le visage, redresse la ligne des yeux, cadre comme la webcam (visage ≈ 60 % de la largeur, yeux à 42 % de la hauteur)
+async function cropFace(im){const w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,1024/Math.max(w,h)),c0=document.createElement("canvas"),N=512;
+ c0.width=Math.round(w*k);c0.height=Math.round(h*k);c0.getContext("2d").drawImage(im,0,0,c0.width,c0.height);let r=null;
+ try{await loadFA();r=await faceapi.detectSingleFace(c0,new faceapi.TinyFaceDetectorOptions({inputSize:608,scoreThreshold:.3})).withFaceLandmarks();}catch(e){console.warn("recadrage :",e);}
+ const o=document.createElement("canvas");o.width=o.height=N;const g=o.getContext("2d");
+ if(!r){const n=Math.min(c0.width,c0.height);g.drawImage(c0,(c0.width-n)/2,(c0.height-n)*.25,n,n,0,0,N,N);return{url:o.toDataURL("image/jpeg",.92),ok:false};}
+ const L=r.landmarks.positions,av=a=>[a.reduce((t,p)=>t+p.x,0)/a.length,a.reduce((t,p)=>t+p.y,0)/a.length],le=av(L.slice(36,42)),re=av(L.slice(42,48)),
+  ang=Math.atan2(re[1]-le[1],re[0]-le[0]),fw=Math.hypot(L[16].x-L[0].x,L[16].y-L[0].y),sc=.6*N/fw,ex=(le[0]+re[0])/2,ey=(le[1]+re[1])/2;
+ try{g.filter="blur(18px)";}catch(_){}g.drawImage(c0,0,0,N,N);try{g.filter="none";}catch(_){}
+ g.translate(.5*N,.42*N);g.rotate(-ang);g.scale(sc,sc);g.translate(-ex,-ey);g.drawImage(c0,0,0);
+ return{url:o.toDataURL("image/jpeg",.92),ok:true};}
+$("#picIn").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const u=URL.createObjectURL(f),im=new Image(),cap=$("#moi figcaption");im.src=u;
+ $("#moi").classList.remove("hid");cap.textContent="Recadrage du visage…";
+ try{await im.decode();}catch(_){cap.textContent="Image illisible";return;}
+ const c=await cropFace(im);URL.revokeObjectURL(u);$("#moiImg").src=c.url;faceSetup(c.url);};
+// ---- Export avatar .glb : visage maillé texturé (photo) + cibles de morphing (ARKit) + intérieur de bouche + dents, avec les réglages ----
+function deform(m){const q=P0,S=fr.S,D=q.map(p=>p.slice()),mv=(i,dx,dy)=>{D[i][0]+=dx;D[i][1]+=dy;},jo=(m.j||0)*.12*S*((fr.ma&&fr.ma.h)||100)/100,sx=1+.12*(m.w||0)-.22*(m.r||0),cx=(q[48][0]+q[54][0])/2,F=m.f||0,BR=m.br||0,BL=m.bl||0,NZ=m.nz||0;
+ for(let i=48;i<=67;i++)D[i][0]=cx+(q[i][0]-cx)*sx;
+ [56,57,58,65,66,67].forEach(i=>mv(i,0,jo));[55,59].forEach(i=>mv(i,0,jo*.8));[48,54,60,64].forEach(i=>mv(i,0,jo*.3));[49,50,51,52,53,61,62,63].forEach(i=>mv(i,0,-jo*.12));
+ [56,57,58,65,66,67].forEach(i=>mv(i,0,-F*.035*S));for(let i=4;i<=12;i++)mv(i,0,jo*.9*Math.max(0,1-Math.abs(i-8)/4.5));
+ [[37,41],[38,40],[43,47],[44,46]].forEach(([u,l])=>{const h=q[l][1]-q[u][1];mv(u,0,h*BL*.95);mv(l,0,-h*BL*.1);});
+ const BW=[.5,.8,1,1,.9,.9,1,1,.8,.5];for(let i=17;i<=26;i++)mv(i,0,-BR*.05*S*BW[i-17]);for(let i=31;i<=35;i++)mv(i,(i-33)*.5*NZ*.02*S,-NZ*.008*S);
+ const ar=((fr.ma&&fr.ma.r)||0)*Math.PI/180;if(ar){const c2=Math.cos(ar),s2=Math.sin(ar);for(let i=4;i<=67;i++){if(i>12&&i<48)continue;const dx=D[i][0]-q[i][0],dy=D[i][1]-q[i][1];D[i][0]=q[i][0]+dx*c2-dy*s2;D[i][1]=q[i][1]+dx*s2+dy*c2;}}
+ return D;}
+function buildGLB(){const q=P0,n=q.length,S=fr.S,W=fc.width,H=fc.height,M=.15,k=M/S,cx=q[27][0],cy=q[33][1],P=i=>[(q[i][0]-cx)*k,-(q[i][1]-cy)*k,fr.z[i]*k];
+ const TG=[["jawOpen",{j:1}],["mouthSmile",{w:1}],["mouthPucker",{r:1}],["mouthRollLower",{f:1}],["eyeBlink",{bl:1}],["browInnerUp",{br:1}],["noseSneer",{nz:1}]];
+ const dl=TG.map(([,m])=>{const D=deform(m);return q.map((p,i)=>[(D[i][0]-p[0])*k,-(D[i][1]-p[1])*k,0]);});
+ const chunks=[],views=[],accs=[];let off=0;
+ const addBuf=u8=>{const pad=(4-off%4)%4;if(pad){chunks.push(new Uint8Array(pad));off+=pad;}views.push({buffer:0,byteOffset:off,byteLength:u8.length});chunks.push(u8);off+=u8.length;return views.length-1;};
+ const addAcc=(arr,type,ct,target)=>{const ta=ct===5126?new Float32Array(arr):new Uint16Array(arr),bv=addBuf(new Uint8Array(ta.buffer));views[bv].target=target;const cp={SCALAR:1,VEC2:2,VEC3:3}[type],a={bufferView:bv,componentType:ct,count:ta.length/cp,type};
+  if(type==="VEC3"){const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let i=0;i<ta.length;i++){mn[i%3]=Math.min(mn[i%3],ta[i]);mx[i%3]=Math.max(mx[i%3],ta[i]);}a.min=mn;a.max=mx;}accs.push(a);return accs.length-1;};
+ const prim=(pos,uv,ix,dls,mat)=>({attributes:{POSITION:addAcc(pos.flat(),"VEC3",5126,34962),TEXCOORD_0:addAcc(uv.flat(),"VEC2",5126,34962)},indices:addAcc(ix,"SCALAR",5123,34963),material:mat,targets:dls.map(d=>({POSITION:addAcc(d.flat(),"VEC3",5126,34962)}))});
+ const ccw=(pos,a,b,c)=>((pos[b][0]-pos[a][0])*(pos[c][1]-pos[a][1])-(pos[b][1]-pos[a][1])*(pos[c][0]-pos[a][0]))<0?[a,c,b]:[a,b,c];
+ // 1) visage : on retire les triangles qui traversent la fente de la bouche
+ const Up=new Set([49,50,51,52,53,61,62,63]),Lo=new Set([55,56,57,58,59,65,66,67]),pf=q.map((_,i)=>P(i)),fix=[];
+ fr.tri.forEach(t=>{if(t.every(i=>i>=60&&i<=67))return;if(t.some(i=>Up.has(i))&&t.some(i=>Lo.has(i)))return;fix.push(...ccw(pf,t[0],t[1],t[2]));});
+ const p0=prim(pf,q.map(p=>[p[0]/W,p[1]/H]),fix,dl,0);
+ // 2) intérieur de bouche (éventail sombre, derrière le visage)
+ const ring=[60,61,62,63,64,65,66,67],cp=pf[60].map((_,c)=>ring.reduce((s,i)=>s+pf[i][c],0)/8),pc=ring.map(i=>[pf[i][0],pf[i][1],pf[i][2]-.006]).concat([[cp[0],cp[1],cp[2]-.006]]),
+  dc=dl.map(d=>ring.map(i=>d[i]).concat([[0,1,2].map(c=>ring.reduce((s,i)=>s+d[i][c],0)/8)])),ic=[];for(let j=0;j<8;j++)ic.push(...ccw(pc,8,j,(j+1)%8));
+ const p1=prim(pc,pc.map(()=>[0,0]),ic,dc,1);
+ // 3) dents : arcade du haut (10) et du bas (8), polygones individuels suivant les morphs des lèvres
+ const arch3=(ids,up,xs,Ls,kinds,wd,lg,hm,P3,I3,Dd)=>{const pts=ids.map(i=>q[i]),seg=x=>{for(let i=0;i<4;i++)if(x<=pts[i+1][0]||i===3)return[i,Math.max(0,Math.min(1,(x-pts[i][0])/((pts[i+1][0]-pts[i][0])||1)))];},
+  yl=x=>{const[i,u]=seg(x);return pts[i][1]+(pts[i+1][1]-pts[i][1])*u;},da=(t,x)=>{const[i,u]=seg(x),a=dl[t][ids[i]],b=dl[t][ids[i+1]];return[0,1,2].map(c=>a[c]+(b[c]-a[c])*u);},
+  tot=wd.reduce((a,b)=>a+b,0),dir=up?1:-1,zz=pf[ids[2]][2]-.003;let x=xs;
+  wd.forEach((w,j)=>{const a=x,b=x+w/tot*Ls,m=(a+b)/2;x=b;const ya=yl(a),yb=yl(b),len=hm*lg[j],f=kinds[j]==="k"?.7:.9,base=P3.length,
+   V=[[a,ya],[b,yb],[b,yb+dir*len*f],[m,(ya+yb)/2+dir*len],[a,ya+dir*len*f]];
+   V.forEach(([vx,vy])=>{P3.push([(vx-cx)*k,-(vy-cy)*k,zz]);TG.forEach((_,t)=>Dd[t].push(da(t,vx)));});
+   [[0,1,2],[0,2,3],[0,3,4]].forEach(r=>I3.push(...ccw(P3,base+r[0],base+r[1],base+r[2])));});};
+ const prims=[p0,p1];
+ // image
+ const src=fimg.src,mime=src.slice(5,src.indexOf(";")),bin=atob(src.split(",")[1]),im=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)im[i]=bin.charCodeAt(i);const iv=addBuf(im);
+ const lp=(fr.lip||[120,50,50]).map(c=>Math.pow(c*.3/255,2.2)),binLen=off+((4-off%4)%4);
+ const vis=Object.fromEntries(Object.entries(V).map(([c,v])=>[c,{jawOpen:v[0],mouthSmile:Math.max(0,v[1]),mouthPucker:Math.min(1,v[2]+Math.max(0,-v[1])*.5),mouthRollLower:v[3]||0}]));
+ const json={asset:{version:"2.0",generator:"Professeur local"},extensionsUsed:["KHR_materials_unlit"],scene:0,scenes:[{nodes:[0]}],
+  nodes:[{name:"Avatar",mesh:0,extras:{voix:FACE?{age:Math.round(FACE.age),genre:FACE.gender}:null,reglages:{bouche:fr.ma||null,dents:false,epaisseurLevres:(fr.ma&&fr.ma.t)||100},couleurLevres:fr.lip||null,visemes:vis}}],
+  meshes:[{name:"Visage",primitives:prims,weights:TG.map(()=>0),extras:{targetNames:TG.map(t=>t[0])}}],
+  materials:[{name:"peau",pbrMetallicRoughness:{baseColorTexture:{index:0},metallicFactor:0,roughnessFactor:1},doubleSided:true,extensions:{KHR_materials_unlit:{}}},
+   {name:"bouche",pbrMetallicRoughness:{baseColorFactor:[lp[0],lp[1],lp[2],1],metallicFactor:0,roughnessFactor:1},doubleSided:true,extensions:{KHR_materials_unlit:{}}},
+   {name:"dents",pbrMetallicRoughness:{baseColorFactor:[.9,.87,.8,1],metallicFactor:0,roughnessFactor:1},doubleSided:true,extensions:{KHR_materials_unlit:{}}}],
+  textures:[{source:0}],images:[{bufferView:iv,mimeType:mime}],buffers:[{byteLength:binLen}],bufferViews:views,accessors:accs};
+ const js=new TextEncoder().encode(JSON.stringify(json)),jb=new Uint8Array(js.length+(4-js.length%4)%4).fill(32);jb.set(js);
+ const total=12+8+jb.length+8+binLen,out=new Uint8Array(total),dv=new DataView(out.buffer);
+ dv.setUint32(0,0x46546C67,true);dv.setUint32(4,2,true);dv.setUint32(8,total,true);dv.setUint32(12,jb.length,true);dv.setUint32(16,0x4E4F534A,true);out.set(jb,20);
+ let o=20+jb.length;dv.setUint32(o,binLen,true);dv.setUint32(o+4,0x004E4942,true);o+=8;chunks.forEach(c=>{out.set(c,o);o+=c.length;});return out;}
+function exportGLB(){if(!fr.raw){alert("Aucun visage prêt : prenez d'abord une photo.");return;}
+ try{const out=buildGLB(),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"model/gltf-binary"}));a.download="avatar_professeur.glb";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);}
+ catch(e){console.error(e);alert("Export impossible : "+e.message);}}
+let uiOn=!document.body.classList.contains("clean");try{const v=localStorage.getItem("prof_ui2");if(v!==null)uiOn=v!=="0";}catch(e){}
+function setUI(on,save){uiOn=on;if(save)try{localStorage.setItem("prof_ui2",on?"1":"0");}catch(e){}$("#mctl").classList.toggle("hid",!on);{const b=$("#setBtn");b.title=on?"Masquer les réglages de l'avatar":"Afficher les réglages de l'avatar";b.setAttribute("aria-expanded",on?"true":"false");b.classList.toggle("on",on);}{const g=$("#galSet");if(g){g.classList.toggle("on",on);g.title=on?"Masquer les réglages de l'avatar":"Afficher les réglages de l'avatar";g.setAttribute("aria-expanded",on?"true":"false");}}const c=$("#moiCv");if(c)c.style.cursor=on?"crosshair":"default";}
+$("#setBtn").onclick=()=>{if($("#moi").classList.contains("hid")){bulle.textContent="Ajoutez d'abord une photo (📷 Ma photo ou 🖼️ Autre photo) : les réglages de l'avatar apparaîtront sous la photo.";return;}setUI(!uiOn,true);};$("#expBtn").onclick=exportGLB;$("#galSet").onclick=()=>$("#setBtn").click();
+// ---- Voix automatique : enfant / adulte × masculin / féminin ----
+function genderOf(v){const n=v.name;if(/female|femme|denise|vivienne|eloise|audrey|am[eé]lie|marie|hortense|julie|claire|l[eé]a|brigitte|sylvie|google fran/i.test(n))return"f";
+ if(/\bmale\b|henri|remy|r[ée]mi|thomas|paul|antoine|claude|mathieu|jean|nicolas|guillaume|pierre|bernard/i.test(n))return"m";return"?";}
+function applyFaceVoice(u){if(!FACE)return;const g=FACE.gender==="male"?"m":"f",kid=FACE.age<13;
+ const fv=speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang)),same=fv.filter(v=>genderOf(v)===g),
+  qs=v=>(/natural|neural|online/i.test(v.name)?2:0)+(/^fr[-_]FR/i.test(v.lang)?1:0);
+ if(same.length){u.voice=same.sort((a,b)=>qs(b)-qs(a))[0];u.lang=u.voice.lang;}
+ const ok=same.length>0;u.pitch=kid?(ok?1.3:1.45):g==="m"?(ok?.95:.75):(ok?1.02:1.15);u.rate=kid?1:.97;}
+// ---- Cours ----
+// ===== CONFIGURATION (usage personnel : ne pas héberger ce fichier publiquement) =====
+const CONFIG={
+ groq:{key:"via-serveur",url:"/api/groq",models:["openai/gpt-oss-120b","qwen/qwen3.6-27b","openai/gpt-oss-20b"]},
+ openrouter:{key:"via-serveur",url:"/api/openrouter",models:["minimax/minimax-m3.1-flash:free","nvidia/nemotron-3-ultra-550b-a55b:free","openai/gpt-oss-20b:free","openrouter/free"]}
+};
+async function askLLM(prompt){
+ const errs=[];
+ for(const [nom,p] of Object.entries(CONFIG)){for(const model of p.models){
+  try{
+   const r=await fetch(p.url,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+p.key},body:JSON.stringify({model,messages:[{role:"user",content:prompt}],temperature:.6})});
+   if(!r.ok)throw new Error(r.status+" "+(await r.text()).slice(0,120));
+   const j=await r.json();let t=(j.choices?.[0]?.message?.content||"").replace(/<think>[\s\S]*?<\/think>/g,"").replace(/```json|```/g,"").trim();
+   const a=t.indexOf("{"),z=t.lastIndexOf("}");if(a<0||z<=a)throw new Error("réponse sans JSON");
+   return JSON.parse(t.slice(a,z+1));
+  }catch(e){errs.push(nom+"/"+model+" : "+e.message);}
+ }}
+ throw new Error(errs.join(" | "));
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let gen=0,pend=null,kidMode=false;
+const mark=el=>{board.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));if(el)el.classList.add("sel");paraSet(el);titlesRefresh(el);};
+// ----- Cadre "paragraphe" (sous les miniatures) : montre le paragraphe lu, synchronisé avec le tableau et la voix -----
+const PARA={say:"",alt:"",body:"",sp:[],on:-1};
+// Phrases : découpe commune (cadre « paragraphe », tableau, lecture au clic)
+function sentSplit(t){const z=String(t).replace(/(\d)\.(\d)/g,"$1\u0001$2"),re=/[^.!?\u2026]+[.!?\u2026]*\s*/g,o=[];let m;while((m=re.exec(z)))o.push({s:m.index,e:m.index+m[0].length});return o;}
+function sentHTML(t){t=String(t==null?"":t);let out="",last=0;sentSplit(t).forEach(x=>{if(x.s>last)out+=esc(t.slice(last,x.s));out+='<span class="ss">'+esc(t.slice(x.s,x.e))+'</span>';last=x.e;});return out+(last<t.length?esc(t.slice(last)):"");}
+function hlBoard(k){board.querySelectorAll(".ss.rd").forEach(x=>x.classList.remove("rd"));const h=board.querySelector(".sel");if(!h||k<0)return;const L=h.querySelectorAll(".ss");if(L[k])L[k].classList.add("rd");}
+// Clic sur une phrase (tableau ou cadre paragraphe) : le professeur lit cette phrase seule
+// Lecture continue : à partir d'un paragraphe (ou d'une phrase), le professeur enchaîne jusqu'à la fin du cours
+const COURSE={items:[],mine:0,end:null};
+function courseFrom(el,k){if(VMODE||!el)return;const id=++run,C=COURSE,mine=C.mine;mark(el);
+ (async()=>{let j=C.items.indexOf(el);
+  if(j<0){let t=el.dataset.say;const sp=k>=0&&PARA.sp[k];if(sp){t=PARA.body.slice(sp.s,sp.e).trim()||t;PARA.on=k;hlBoard(k);const pb=$("#para .pb");if(pb)pb.querySelectorAll(".ps").forEach((x,i)=>x.classList.toggle("on",i===k));}await say(t,id);return;} // exercice : la phrase cliquée est lue seule
+  const live=()=>id===run&&mine===gen;
+  if(k>0&&PARA.sp[k]){const s=PARA.sp[k],t=PARA.body.slice(s.s).trim();if(t){PARA.alt=t;PARA.on=k;hlBoard(k);const pb=$("#para .pb");if(pb)pb.querySelectorAll(".ps").forEach((x,i)=>x.classList.toggle("on",i===k));await say(t,id);j++;}}
+  for(;j<C.items.length;j++){if(!live())return;const it=C.items[j];mark(it);it.scrollIntoView({block:"nearest"});await say(it.dataset.say,id);}
+  if(live()&&C.end)await C.end(id);})();}
+function readSent(host,k){if(VMODE||!host)return;courseFrom(host,k);}
+function paraSet(el){const box=$("#para");if(!box)return;PARA.say="";PARA.alt="";PARA.sp=[];PARA.on=-1;
+ if(!el||!el.dataset||!el.dataset.say){box.classList.add("hid");if(!el)titlesEmpty();return;}
+ let title,body;
+ if(el.classList.contains("pt")){const h=el.querySelector(":scope>h2"),p=el.querySelector(":scope>p");title=h?h.textContent:"Paragraphe";body=p?p.textContent:el.textContent;}
+ else if(el.id==="in"){title="Introduction";body=el.textContent;}
+ else{title="Exercice";body=el.textContent.replace(/^\s*(?:\d+\.|💡|✅)\s*/u,"");}
+ body=(body||"").trim();if(!body){box.classList.add("hid");return;}
+ PARA.say=el.dataset.say;PARA.body=body;
+ PARA.sp=sentSplit(body);const html=PARA.sp.map(x=>'<span class="ps">'+esc(body.slice(x.s,x.e))+'</span>').join("");
+ box.querySelector(".ph").textContent=title;const pb=box.querySelector(".pb");pb.innerHTML=html;pb.scrollTop=0;box.classList.remove("hid");}
+
+// ----- Cadre des titres : un titre par paragraphe, le titre lu est surligné ; un clic fait relire ce paragraphe -----
+function dotsRender(pts,cur){const dd=$("#dots .dd");if(!dd)return;dd.innerHTML="";let ci=pts.indexOf(cur);if(ci<0&&cur&&cur.id!=="in")ci=pts.length;let onB=null;
+ pts.forEach((el,i)=>{const b=document.createElement("button");b.type="button";b.className="dt"+(el===cur?" on":(ci>=0&&i<ci?" done":""));b.textContent=i+1;
+  const h=el.querySelector(":scope>h2");b.title=(i+1)+". "+(h?h.textContent:"Paragraphe");b.setAttribute("aria-label","Paragraphe "+(i+1));
+  b.onclick=()=>courseFrom(el);dd.appendChild(b);if(el===cur)onB=b;});
+ const dc=$("#dots .dc");if(dc)dc.textContent=pts.length?((ci>=0&&ci<pts.length?ci+1:(ci>=pts.length?pts.length:0))+" / "+pts.length):"";
+ if(onB)dd.scrollLeft=Math.max(0,onB.offsetLeft-dd.clientWidth/2);}
+function titlesEmpty(){const box=$("#tit");if(!box)return;{const dd=$("#dots .dd"),dc=$("#dots .dc");if(dd)dd.innerHTML="";if(dc)dc.textContent="";}box.querySelector(".tc").textContent="0";box.querySelector(".tb").innerHTML='<div class="empty">Les titres s\u2019afficheront ici dès que le cours sera généré.</div>';}
+function titlesRefresh(cur){const box=$("#tit");if(!box)return;const pts=[...board.querySelectorAll(".pt")];
+ if(!pts.length){titlesEmpty();return;}
+ dotsRender(pts,cur);
+ const tb=box.querySelector(".tb");tb.innerHTML="";let on=null;box.querySelector(".tc").textContent=pts.length;
+ pts.forEach((el,i)=>{const h=el.querySelector(":scope>h2"),b=document.createElement("button");b.type="button";b.className="ti"+(el===cur?" on":"");
+  b.innerHTML='<span class="n">'+(i+1)+'</span><span class="t">'+esc(h?h.textContent:"Paragraphe")+'</span>';
+  b.onclick=()=>courseFrom(el);tb.appendChild(b);if(el===cur)on=b;});
+ if(on)tb.scrollTop=Math.max(0,on.offsetTop-tb.clientHeight/3);}
+// pos = position dans le texte lu (version "dite") ; on la ramène proportionnellement au texte affiché
+function paraSync(txt,spLen,pos){if(!PARA.sp.length||(txt!==PARA.say&&txt!==PARA.alt))return;
+ const rawPos=pos/Math.max(1,spLen)*txt.length,bodyPos=Math.max(0,rawPos-(txt.length-PARA.body.length));
+ let k=PARA.sp.findIndex(x=>bodyPos>=x.s&&bodyPos<x.e);if(k<0)k=bodyPos>=PARA.body.length?PARA.sp.length-1:0;
+ if(k===PARA.on)return;PARA.on=k;hlBoard(k);const pb=$("#para .pb"),sp=pb.querySelectorAll(".ps");
+ sp.forEach((x,i)=>x.classList.toggle("on",i===k));const t=sp[k];if(t)pb.scrollTop=Math.max(0,t.offsetTop-pb.clientHeight/3);}
+
+// ----- Voix : meilleure voix française disponible (neuronale/naturelle d'abord) + texte préparé pour être « dit » et non « lu » -----
+let FRV=null;
+function bestVoice(){if(FRV)return FRV;const vs=speechSynthesis.getVoices().filter(v=>/^fr/i.test(v.lang));if(!vs.length)return null;
+ const sc=v=>{const n=v.name;let x=0;if(/natural|neural|online/i.test(n))x+=10;if(/premium|enhanced|am[eé]lior/i.test(n))x+=8;if(/google/i.test(n))x+=5;
+  if(/denise|vivienne|eloise|henri|remy|audrey|am[eé]lie|thomas|marie|hortense|julie|paul|claire|l[eé]a/i.test(n))x+=2;if(/^fr[-_]FR/i.test(v.lang))x+=3;if(v.localService===false)x+=1;return x;};
+ return FRV=vs.sort((a,b)=>sc(b)-sc(a))[0];}
+if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{FRV=null;};
+function speakable(t){return String(t||"")
+ .replace(/\bet c(?:ætera|etera)\b/gi,"et cetera").replace(/\betc\.?/gi,"et cetera").replace(/\bex\.\s/gi,"par exemple ").replace(/\bn°\s?/gi,"numéro ")
+ .replace(/\b1er\b/g,"premier").replace(/\b1ère\b/g,"première").replace(/\b(\d+)e\b/g,"$1ième")
+ .replace(/(\d)\s?%/g,"$1 pour cent").replace(/(\d)\s?€/g,"$1 euros").replace(/(\d)\s?\$/g,"$1 dollars").replace(/°\s?C\b/g," degrés Celsius").replace(/°/g," degrés")
+ .replace(/km\/h/gi,"kilomètres par heure").replace(/\bm\/s(?![\wÀ-ÿ])/gi,"mètres par seconde").replace(/(\d)\s?km(?![\wÀ-ÿ])/gi,"$1 kilomètres").replace(/(\d)\s?kg(?![\wÀ-ÿ])/gi,"$1 kilos").replace(/(\d)\s?cm(?![\wÀ-ÿ])/gi,"$1 centimètres").replace(/(\d)\s?m(?![\wÀ-ÿ])/g,"$1 mètres")
+ .replace(/(\d+)\s?\/\s?(\d+)/g,"$1 sur $2").replace(/\s?×\s?/g," fois ").replace(/\s?÷\s?/g," divisé par ").replace(/\s?\+\s?/g," plus ").replace(/\s=\s/g," égale ").replace(/≈/g," environ ").replace(/&/g," et ")
+ .replace(/→|=>|->/g,", ").replace(/[«»"“”*_#~`]/g,"").replace(/\(([^)]*)\)/g,", $1, ").replace(/\s*:\s+/g,", ").replace(/\s*;\s*/g,", ").replace(/\s*[—–]\s*/g,", ")
+ .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"").replace(/\.{3}|…/g,", ").replace(/\n+/g,". ").replace(/\s+/g," ").replace(/,\s*,/g,",").replace(/\s+([,.!?])/g,"$1").trim();}
+let sayTok=0,PAUSED=false,RES=null;
+function pzShow(on){let z=$("#pz");if(!z){z=document.createElement("div");z.id="pz";z.className="hid";z.textContent="⏸ En pause · cliquez sur le tableau pour reprendre";document.body.appendChild(z);}z.classList.toggle("hid",!on);}
+function chunkText(sp){ // découpe en phrases (puis en groupes de souffle aux virgules si > 110 car.), en gardant la position pour la synchro des lèvres
+ const z=sp.replace(/(\d)\.(\d)/g,"$1\u0001$2"),out=[],re=/[^.!?…]+[.!?…]*\s*/g;let m;
+ while((m=re.exec(z))){const t=m[0],o=m.index;if(!t.trim())continue;
+  if(t.length<=110){out.push({t:t.replace(/\u0001/g,"."),o});continue;}
+  const re2=/[^,;]+[,;]?\s*/g;let q,acc="",ao=o;
+  while((q=re2.exec(t))){if(acc&&(acc+q[0]).length>100){out.push({t:acc.replace(/\u0001/g,"."),o:ao});acc="";}if(!acc)ao=o+q.index;acc+=q[0];}
+  if(acc.trim())out.push({t:acc.replace(/\u0001/g,"."),o:ao});}
+ return out.length?out:(sp.trim()?[{t:sp,o:0}]:[]);}
+function say(txt,id){if(VMODE)return new Promise(r=>VWAIT.push(r)).then(()=>say(txt,id)); // pendant une vidéo, le professeur attend
+ if(pend){pend();pend=null;}PAUSED=false;pzShow(false);return new Promise(res=>{
+ bulle.textContent=txt;let fin=false,tm,gapT;const me={};RES=me;
+ const done=()=>{if(fin)return;fin=true;if(RES===me)RES=null;talkStop();board.querySelectorAll(".ss.rd").forEach(x=>x.classList.remove("rd"));clearTimeout(tm);clearTimeout(gapT);if(pend===done)pend=null;res();};
+ pend=done;if(!(voice&&window.speechSynthesis))talkStart(speakable(txt),1); // sans voix : animation au rythme estimé ; avec voix : démarrée par la voix elle-même
+ const timer=()=>{tm=setTimeout(done,Math.min(9000,txt.length*55));};
+ if(voice&&window.speechSynthesis){speechSynthesis.cancel();const tok=++sayTok,sp=speakable(txt),cs=chunkText(sp),bv=bestVoice();
+  // Diction « humaine » : phrase par phrase, avec respirations, intonation montante (?) / vive (!) / descendante en fin de texte, et légère variation naturelle.
+  const run=i=>{if(fin||tok!==sayTok)return;if(i>=cs.length){done();return;}
+   me.i=i;const c=cs[i],lead=c.t.length-c.t.trimStart().length,u=new SpeechSynthesisUtterance(c.t.trim());paraSync(txt,sp.length,c.o+lead);
+   u.lang=bv?bv.lang:"fr-FR";if(bv)u.voice=bv;u.rate=kidMode?.9:.98;u.pitch=kidMode?1.08:1;u.volume=1;applyFaceVoice(u);
+   const end=/\?\s*$/.test(c.t)?"q":/!\s*$/.test(c.t)?"e":/[.…]\s*$/.test(c.t)?"p":"c",rj=()=>(Math.random()-.5)*.05;
+   let r=u.rate*(1+rj()),p=u.pitch*(1+rj()*.8);
+   if(end==="q"){p*=1.08;r*=.97;}if(end==="e"){p*=1.05;r*=1.03;}if(/^(alors|regardez|imaginez|attention|retenez|souvenez|autrement|r[ée]sultat|voil[àa])/i.test(c.t.trim())){p*=1.05;r*=.96;}if(/\d/.test(c.t))r*=.96;if(i===0)r*=.97;if(i===cs.length-1){r*=.95;p*=.97;}
+   u.rate=Math.min(1.4,Math.max(.6,r));u.pitch=Math.min(2,Math.max(.5,p));
+   let started=false,t0s=0;
+   const begin=force=>{if((started&&!force)||fin||tok!==sayTok||PAUSED)return;started=true;t0s=performance.now();talkStart(u.text,u.rate,CPS);}; // les lèvres partent au vrai début de la phrase
+   u.onstart=()=>begin(true);const fb=setTimeout(begin,400); // moteurs qui n'envoient pas « start » : départ estimé, recalé si « start » arrive
+   u.onboundary=e=>{if(tok!==sayTok)return;if(!started)begin();if(!e.name||e.name==="word")talkSync(e.charIndex);paraSync(txt,sp.length,c.o+lead+e.charIndex);};
+   u.onend=()=>{clearTimeout(fb);if(tok===sayTok&&!PAUSED&&!fin){if(started){const dur=(performance.now()-t0s)/1000,n=u.text.length,v=n/(dur*u.rate);if(dur>.5&&n>12&&v>6&&v<32)CPS=CPS*.55+v*.45;}talkStop();} // bouche fermée pendant les respirations
+    if(PAUSED||fin||tok!==sayTok)return;me.i=i+1;gapT=setTimeout(()=>run(i+1),({q:400,e:330,p:360,c:170})[end]+Math.random()*160);};
+   u.onerror=()=>{clearTimeout(fb);if(PAUSED||fin||tok!==sayTok)return;begin();timer();};speechSynthesis.speak(u);};
+  me.pause=()=>{clearTimeout(gapT);speechSynthesis.cancel();talkStop();};
+  me.resume=()=>{setTimeout(()=>{if(!fin&&tok===sayTok&&!PAUSED)run(me.i||0);},60);};
+  run(0);} else timer();});}
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+// ===== Photos : recherche web ouverte (sans Wikipédia/Wikimedia) =====
+// Openverse : moteur de recherche d'images libres de droit (Flickr, musées, banques d'images…), sans clé.
+// Pixabay (facultatif) : clé gratuite sur pixabay.com/api/docs — photos « safe » très adaptées aux enfants, essayées en premier.
+// Banques de photos (clés gratuites, à coller ici ; une source sans clé est simplement ignorée) :
+//  pexels   → pexels.com/api          (recommandé : photos pro, très bonne pertinence)
+//  unsplash → unsplash.com/developers (« Access Key »)
+//  pixabay  → pixabay.com/api/docs
+// Openverse (sans clé) est toujours interrogé en plus ; toutes les sources sont mises en concurrence.
+const IMG_KEYS={pexels:"",unsplash:"",pixabay:""};
+// Google : Google Lens n'a pas d'API de recherche par texte. La recherche d'images Google se fait via l'API « Custom Search JSON »
+// (gratuite jusqu'à 100 requêtes/jour) : clé sur console.cloud.google.com + moteur (cx) créé sur programmablesearchengine.google.com
+// avec « Recherche d'images » activée et « Rechercher sur tout le Web ». Si key/cx sont remplis, Google est essayé en premier.
+const GOOGLE={key:"",cx:""};
+async function imgGoogle(q,lang,used){
+ const r=await fetch(`https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(GOOGLE.key)}&cx=${encodeURIComponent(GOOGLE.cx)}&q=${encodeURIComponent(q)}&searchType=image&imgType=photo&safe=active&num=10&lr=lang_${lang}`);
+ if(!r.ok){console.warn("Google Custom Search :",r.status);return[];}
+ return((await r.json()).items||[]).filter(it=>it.link&&!badSrc({url:it.link,foreign_landing_url:it.image&&it.image.contextLink})&&!used.has("g"+it.link)).map(it=>({
+  key:"g"+it.link,src:it.link,alt:(it.image&&it.image.thumbnailLink)||it.link,titre:it.title||q,url:(it.image&&it.image.contextLink)||it.link,w:(it.image&&it.image.width)||0,
+  text:nrm((it.title||"")+" "+(it.snippet||"")),credit:(it.displayLink||"Google")+" · Google Images"}));}
+let imgPause=0; // après une erreur 429 (quota), on laisse Openverse tranquille 1 minute
+const badSrc=it=>/wiki(m|p)edia/i.test([it.source,it.provider,it.foreign_landing_url,it.url,it.creator_url].join(" "));
+const nrm=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const STOP=new Set("the and for with from this that les des une pour avec dans sur aux est son ses ces par que qui".split(" "));
+const toks=t=>[...new Set(nrm(t).split(/[^a-z0-9]+/).filter(w=>w.length>2&&!STOP.has(w)).map(w=>w.replace(/s$/,"")))];
+async function imgOpenverse(q,lang,used){
+ if(Date.now()<imgPause)return[];
+ const r=await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&category=photograph&page_size=20`);
+ if(r.status===429){imgPause=Date.now()+60000;console.warn("Openverse : quota atteint (429), pause 1 min");return[];}
+ if(!r.ok)return[];
+ return((await r.json()).results||[]).filter(it=>!badSrc(it)&&!it.mature&&(it.thumbnail||it.url)&&(it.width||600)>=300&&!used.has(it.id)).map(it=>{
+  const L=(it.license||"").toUpperCase(),cc=(L==="CC0"||L==="PDM")?L:"CC "+L+(it.license_version?" "+it.license_version:"");
+  return{key:it.id,src:it.thumbnail||it.url,alt:it.url,titre:it.title||q,url:it.foreign_landing_url||it.url,w:it.width||0,h:it.height||0,
+   text:nrm((it.title||"")+" "+(it.tags||[]).map(t=>t.name).join(" ")),credit:`${it.creator||"auteur inconnu"} · ${cc} · ${it.source||it.provider||"web"}`};});}
+async function imgPexels(q,lang,used){
+ const r=await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=15&orientation=landscape&size=large&locale=${lang==="fr"?"fr-FR":"en-US"}`,{headers:{Authorization:IMG_KEYS.pexels}});
+ if(!r.ok){console.warn("Pexels :",r.status);return[];}
+ return((await r.json()).photos||[]).filter(h=>!used.has("pe"+h.id)).map(h=>({key:"pe"+h.id,src:h.src.large,alt:h.src.large2x||h.src.large,titre:(h.alt||q).slice(0,90),url:h.url,w:h.width||0,h:h.height||0,
+  text:nrm((h.alt||"")+" "+q),credit:`${h.photographer} · Pexels`}));}
+async function imgUnsplash(q,lang,used){
+ const r=await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=15&orientation=landscape&content_filter=high`,{headers:{Authorization:"Client-ID "+IMG_KEYS.unsplash}});
+ if(!r.ok){console.warn("Unsplash :",r.status);return[];}
+ return((await r.json()).results||[]).filter(h=>!used.has("un"+h.id)).map(h=>({key:"un"+h.id,src:h.urls.small,alt:h.urls.regular,titre:(h.alt_description||h.description||q).slice(0,90),url:(h.links&&h.links.html)||"https://unsplash.com",w:h.width||0,h:h.height||0,
+  text:nrm((h.alt_description||"")+" "+(h.description||"")+" "+q),credit:`${(h.user&&h.user.name)||"auteur"} · Unsplash`}));}
+async function imgPixabay(q,lang,used){
+ const r=await fetch(`https://pixabay.com/api/?key=${encodeURIComponent(IMG_KEYS.pixabay)}&q=${encodeURIComponent(q)}&lang=${lang}&image_type=photo&safesearch=true&orientation=horizontal&per_page=12`);
+ if(!r.ok)return[];
+ return((await r.json()).hits||[]).filter(h=>!used.has("px"+h.id)).map(h=>({key:"px"+h.id,src:h.webformatURL,alt:h.largeImageURL,titre:(h.tags||q).split(",")[0],url:h.pageURL,w:h.webformatWidth||0,text:nrm(h.tags),credit:`${h.user} · Pixabay`}));}
+// Recherche « avancée » : plusieurs formulations (anglais d'abord), plusieurs moteurs, doublons exclus.
+// Une photo n'est gardée que si son titre/ses mots-clés contiennent le SUJET du cours (must) et des mots de la requête :
+// mieux vaut pas de photo qu'une photo hors sujet.
+// ----- Vision « type Google Lens » : un modèle qui REGARDE les photos candidates et garde celle qui montre vraiment le sujet -----
+// (Google Lens n'a pas d'API ; ceci reproduit son principe : comprendre le contenu visuel de l'image.)
+// Les modèles sont essayés dans l'ordre ; si aucun ne répond, on retombe sur le classement par mots-clés. Adaptez les noms si un modèle disparaît.
+const VISION={on:true,fails:0,list:[
+ {url:"/api/groq",key:CONFIG.groq.key,model:"meta-llama/llama-4-scout-17b-16e-instruct"},
+ {url:"/api/openrouter",key:CONFIG.openrouter.key,model:"google/gemma-3-27b-it:free"}]};
+// renvoie l'index de la meilleure photo, -1 si aucune ne montre le sujet, null si la vision est indisponible
+async function visionPick(cs,desc,pro=false){
+ if(!VISION.on||!desc||!cs.length)return null;
+ const crit=pro?`Tu es directeur photo pour un manuel scolaire. Choisis la photo d'illustration principale idéale pour : « ${desc} ». Critères, par ordre d'importance : 1) le sujet est immédiatement reconnaissable et au premier plan ; 2) netteté et belle lumière ; 3) composition propre, cadrage équilibré, fond simple ; 4) aucun texte, logo, filigrane, collage, capture d'écran ni illustration dessinée ; 5) convient à un public scolaire.`:`Laquelle montre le mieux, de façon claire et reconnaissable : « ${desc} » ? Préfère une vraie photo nette, centrée sur le sujet, sans texte, logo ni filigrane.`;
+ const content=[{type:"text",text:`Voici ${cs.length} photo(s) numérotée(s) de 1 à ${cs.length}. ${crit} Réponds UNIQUEMENT en JSON : {"best":numéro,"ok":true}. Mets "ok":false si AUCUNE photo ne montre vraiment ce sujet.`}];
+ cs.forEach((c,k)=>{content.push({type:"text",text:"Photo "+(k+1)+" :"},{type:"image_url",image_url:{url:c.src}});});
+ for(const m of VISION.list){
+  try{
+   const ac=new AbortController(),to=setTimeout(()=>ac.abort(),15000);
+   const r=await fetch(m.url,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+m.key},body:JSON.stringify({model:m.model,messages:[{role:"user",content:content}],temperature:0,max_tokens:60})});
+   clearTimeout(to);if(!r.ok)throw new Error(r.status);
+   const t=((await r.json()).choices?.[0]?.message?.content||"").replace(/<think>[\s\S]*?<\/think>/g,""),a=t.indexOf("{"),z=t.lastIndexOf("}");
+   const j=JSON.parse(t.slice(a,z+1));VISION.fails=0;
+   if(j.ok===false)return -1;const n=Math.round(+j.best)-1;return n>=0&&n<cs.length?n:0;
+  }catch(e){console.warn("vision",m.model,e.message||e);}}
+ if(++VISION.fails>=3){VISION.on=false;console.warn("vision désactivée : classement par mots-clés uniquement");}
+ return null;}
+async function findImage(qs,used=new Set(),must={},need={},desc="",pro=false){
+ const seen=new Set(),list=[],pool=[];
+ for(const [t,lang] of qs){const q=String(t||"").trim();if(q&&!seen.has(q.toLowerCase())){seen.add(q.toLowerCase());list.push([q,lang]);}}
+ for(const [q,lang] of list.slice(0,4)){
+  const qt=toks(q),mt=must[lang]||[],nd=need[lang]||[];let cands=[];
+  const fns=[(GOOGLE.key&&GOOGLE.cx)?imgGoogle:null,IMG_KEYS.pexels?imgPexels:null,IMG_KEYS.unsplash?imgUnsplash:null,IMG_KEYS.pixabay?imgPixabay:null,imgOpenverse].filter(Boolean);
+  cands=(await Promise.all(fns.map(fn=>fn(q,lang,used).catch(e=>{console.warn("recherche d'image :",e);return[];})))).flat();
+  const ok=cands.map(c=>{const hit=qt.filter(t=>c.text.includes(t)).length,onTheme=!mt.length||mt.some(t=>c.text.includes(t)),ndHit=nd.filter(t=>c.text.includes(t)).length;
+   return{c,score:(onTheme&&hit&&(!nd.length||ndHit))?hit*2+ndHit*3+(c.w>=600?1:0)+(c.key.startsWith("px")?.5:0)+(c.key.startsWith("g")?.7:0)+(/^(pe|un)/.test(c.key)?1:0):-1};}).filter(x=>x.score>0).sort((x,y)=>y.score-x.score);
+  if(pro){ // photo principale : on réunit les candidats de TOUTES les requêtes, on favorise la haute définition, puis le « directeur photo » tranche
+   pool.push(...ok.map(x=>({c:x.c,score:x.score+(x.c.w>=1600?3:x.c.w>=1000?2:x.c.w>=700?1:0)+(x.c.h&&x.c.w/x.c.h>=1.25&&x.c.w/x.c.h<=2.2?1:0)})));continue;}
+  if(ok.length){const top=ok.slice(0,4).map(x=>x.c);let k=0;
+   const v=await visionPick(top,desc);if(v===-1)continue; // la vision ne reconnaît pas le sujet : requête suivante
+   if(v!=null)k=v;used.add(top[k].key);return top[k];}
+ }
+ if(pro&&pool.length){const m=new Map();pool.forEach(x=>{if(!m.has(x.c.key)||m.get(x.c.key).score<x.score)m.set(x.c.key,x);});
+  const top=[...m.values()].sort((x,y)=>y.score-x.score).slice(0,8).map(x=>x.c);
+  const v=await visionPick(top,desc,true);if(v===-1)return null;
+  const k=v==null?0:v;used.add(top[k].key);return top[k];}
+ return null;}
+function figEl(im,id,cls){
+ const f=document.createElement("figure");if(id)f.id=id;if(cls)f.className=cls;
+ f.innerHTML='<img alt=""><figcaption>Photo : <a target="_blank" rel="noopener"></a><span></span></figcaption>';
+ const img=f.querySelector("img");img.alt=im.titre;let tried=false;
+ const hq=id==="fig"&&im.alt&&/^https?:/.test(im.alt)&&!/encrypted-tbn/.test(im.alt),a1=hq?im.alt:im.src,a2=hq?im.src:im.alt;
+ img.onerror=()=>{if(!tried&&a2&&a2!==a1){tried=true;img.src=a2;}else f.remove();};img.src=a1;
+ const a=f.querySelector("a");a.href=im.url;a.textContent=im.titre;a.onclick=e=>e.stopPropagation();
+ f.querySelector("span").textContent=im.credit?" — "+im.credit:"";return f;}
+function ytLink(q){const a=document.createElement("a");a.className="yt";a.target="_blank";a.rel="noopener";
+ a.href="https://www.youtube.com/results?search_query="+encodeURIComponent(q);a.textContent="▶ Voir des vidéos sur YouTube : « "+q+" »";a.onclick=e=>e.stopPropagation();return a;}
+// Liens vidéo d'un paragraphe : YouTube (recherche) + quelques autres plateformes, ouverts dans un nouvel onglet (aucun lecteur intégré)
+function paraLinks(q){const r=document.createElement("div");r.className="pl vl";
+ const L=[["▶ YouTube","https://www.youtube.com/results?search_query="+encodeURIComponent(q)],["Dailymotion","https://www.dailymotion.com/search/"+encodeURIComponent(q)],["Arte","https://www.arte.tv/fr/search/?q="+encodeURIComponent(q)],["TikTok","https://www.tiktok.com/search?q="+encodeURIComponent(q)]];
+ const chips=()=>{if(r.querySelector(".yt"))return;L.slice(0,1).forEach(([n,u])=>{const a=document.createElement("a");a.className="yt";a.target="_blank";a.rel="noopener";a.href=u;a.title="Vidéos : "+q;a.textContent=n;a.onclick=e=>e.stopPropagation();r.appendChild(a);});};
+ // une seule miniature vidéo par paragraphe (remplace les liens) ; lien YouTube de secours si aucune vidéo
+ // miniature (10 %) de la première vidéo trouvée pour ce paragraphe ; clic = lecteur intégré, Ctrl/Cmd+clic = YouTube
+ ytSearch(q).then(res=>{const v=res&&res[0];if(!v){chips();return;}if(!r.isConnected)return;const t=document.createElement("a");t.className="vth";t.target="_blank";t.rel="noopener";
+  t.href="https://www.youtube.com/watch?v="+encodeURIComponent(v.id);t.title=v.titre;
+  t.onclick=e=>{e.stopPropagation();if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();openPlayer(v);};
+  const im=document.createElement("img");im.alt=v.titre;im.loading="lazy";im.src="https://i.ytimg.com/vi/"+encodeURIComponent(v.id)+"/mqdefault.jpg";im.onerror=()=>{t.remove();chips();};t.appendChild(im);r.insertBefore(t,r.firstChild);}).catch(()=>chips());
+ return r;}
+// ----- Aperçu des vidéos trouvées (miniatures cliquables, 5 colonnes, sous l'avatar) -----
+// Avec YT_KEY : API officielle YouTube Data v3. Sans clé : instances publiques Piped / Invidious (leur disponibilité peut varier ; une instance en échec est ignorée ensuite).
+const YT_KEY="";
+const YT_INST={piped:["https://pipedapi.kavin.rocks","https://pipedapi.adminforge.de","https://api.piped.private.coffee"],inv:["https://yewtu.be","https://inv.nadeko.net"]},YT_DEAD=new Set();
+async function tfetch(u,ms=5000){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms);try{const r=await fetch(u,{signal:ac.signal});if(!r.ok)throw new Error(r.status);return await r.json();}finally{clearTimeout(t);}}
+async function ytSearch(q){const e=encodeURIComponent(q);
+ if(YT_KEY){try{const j=await tfetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&safeSearch=strict&relevanceLanguage=fr&q=${e}&key=${encodeURIComponent(YT_KEY)}`);
+  const o=(j.items||[]).filter(x=>x.id&&x.id.videoId).map(x=>({id:x.id.videoId,titre:x.snippet.title}));if(o.length)return o;}catch(_){}}
+ for(const b of YT_INST.piped){if(YT_DEAD.has(b))continue;try{const j=await tfetch(`${b}/search?q=${e}&filter=videos`);
+  const o=(j.items||[]).filter(x=>/watch\?v=/.test(x.url||"")).map(x=>({id:x.url.split("v=")[1].split("&")[0],titre:x.title||q}));if(o.length)return o;}catch(_){YT_DEAD.add(b);}}
+ for(const b of YT_INST.inv){if(YT_DEAD.has(b))continue;try{const j=await tfetch(`${b}/api/v1/search?q=${e}&type=video`);
+  const o=(Array.isArray(j)?j:[]).filter(x=>x.videoId).map(x=>({id:x.videoId,titre:x.title||q}));if(o.length)return o;}catch(_){YT_DEAD.add(b);}}
+ return[];}
+function showThumbs(queries,alive){const box=$("#vthumbs"),res=queries.map(()=>null);
+ const render=()=>{if(!alive())return;const seen=new Set(),list=[];
+  res.forEach(r=>{const v=r&&r.find(x=>!seen.has(x.id));if(v){seen.add(v.id);list.push(v);}});
+  if(!list.length){box.classList.add("hid");return;}
+  box.innerHTML='<div class="cap">▶ Vidéos trouvées</div><div class="vt5"></div>';const g=box.querySelector(".vt5");
+  list.slice(0,5).forEach(v=>{const a=document.createElement("a");a.target="_blank";a.rel="noopener";a.href="https://www.youtube.com/watch?v="+encodeURIComponent(v.id);a.title=v.titre;a.onclick=e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();openPlayer(v);};
+   const im=document.createElement("img");im.alt=v.titre;im.loading="lazy";im.src="https://i.ytimg.com/vi/"+encodeURIComponent(v.id)+"/mqdefault.jpg";im.onerror=()=>a.remove();a.appendChild(im);g.appendChild(a);});
+  box.classList.remove("hid");};
+ queries.forEach((q,i)=>ytSearch(q).then(r=>{res[i]=r;render();}).catch(()=>{}));}
+// ----- Lecteur officiel YouTube intégré dans le tableau : YouTube IFrame Player API -----
+// Bonnes pratiques : domaine youtube-nocookie, paramètre origin (http/https), enablejsapi, playsinline, rel=0, vérification oEmbed avant lecture,
+// gestion des erreurs 100/101/150/153, lecteur détruit à la fermeture, voix du professeur mise en pause pendant la vidéo puis reprise.
+let VMODE=false,VPAUSED=false,VPLAYER=null,VWAIT=[],_ytApi=null;
+function ytAPI(){if(_ytApi)return _ytApi;
+ return _ytApi=new Promise(res=>{if(window.YT&&YT.Player)return res(YT);
+  const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{if(prev)try{prev();}catch(_){}res(window.YT);};
+  const sc=document.createElement("script");sc.src="https://www.youtube.com/iframe_api";sc.onerror=()=>{_ytApi=null;res(null);};document.head.appendChild(sc);});}
+// oEmbed : 200 = intégrable ; 401/403 = intégration désactivée par le propriétaire ; 404 = introuvable/privée ; inconnu (réseau/CORS) = null → on tente quand même
+const _emb={};
+function ytEmbeddable(id){return _emb[id]||(_emb[id]=(async()=>{const ac=new AbortController(),t=setTimeout(()=>ac.abort(),5000);
+ try{const r=await fetch("https://www.youtube.com/oembed?format=json&url="+encodeURIComponent("https://www.youtube.com/watch?v="+id),{signal:ac.signal});
+  if(r.ok)return true;if([401,403,404].includes(r.status))return false;return null;}catch(_){return null;}finally{clearTimeout(t);}})());}
+function closePlayer(discard){if(!VMODE)return;
+ try{VPLAYER&&VPLAYER.destroy();}catch(_){}VPLAYER=null;const o=$("#vplay");if(o)o.remove();
+ board.classList.remove("vmode");document.body.classList.remove("vm");VMODE=false;
+ const w=VWAIT.splice(0),vp=VPAUSED;VPAUSED=false;if(discard)return;
+ if(vp){PAUSED=false;if(RES&&RES.resume)RES.resume();} // le professeur reprend là où il s'était arrêté
+ w.forEach(f=>f());}
+// ----- Synchro labiale sur la voix de la vidéo -----
+// YouTube est dans un iframe d'un autre domaine : sa piste audio n'est pas accessible à la page. On capture donc l'audio de CET onglet
+// (getDisplayMedia, case « Partager l'audio de l'onglet ») et on l'analyse en direct : niveau de voix normalisé (AGC) → ouverture de mâchoire ;
+// répartition spectrale 200–700 Hz / 700–1400 Hz / 1400–3200 Hz (proxys des formants F1/F2) → arrondi (O/U), ouverture (A) ou étirement (I/E) ;
+// énergie 4,5–9 kHz dominante → consonne sifflante (S/CH) ; attaque brusque → petit hochement de tête.
+const AUD={on:false,ctx:null,an:null,stream:null,buf:null,lvl:0,slow:0,floor:1e-4,peak:1e-3,cool:0,tg:[0,0,0,0],onchange:null,
+ async start(){if(this.on)return"ok";
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia)return"unsupported";
+  try{const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:1,width:320,height:180},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},preferCurrentTab:true,selfBrowserSurface:"include",systemAudio:"exclude"});
+   if(!st.getAudioTracks().length){st.getTracks().forEach(t=>t.stop());return"noaudio";}
+   const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();try{await this.ctx.resume();}catch(_){}
+   const src=this.ctx.createMediaStreamSource(new MediaStream(st.getAudioTracks()));
+   this.an=this.ctx.createAnalyser();this.an.fftSize=1024;this.an.smoothingTimeConstant=.3;src.connect(this.an); // jamais relié aux haut-parleurs : pas d'écho
+   this.buf=new Float32Array(this.an.frequencyBinCount);this.stream=st;this.lvl=this.slow=0;this.floor=1e-4;this.peak=1e-3;
+   st.getTracks().forEach(t=>t.onended=()=>this.stop());this.on=true;return"ok";
+  }catch(e){return e&&e.name==="NotAllowedError"?"denied":"error";}},
+ stop(){const st=this.stream;this.on=false;this.stream=null;this.lvl=0;try{st&&st.getTracks().forEach(t=>t.stop());}catch(_){}
+  try{this.ctx&&this.ctx.close();}catch(_){}this.ctx=this.an=null;if(this.onchange)this.onchange();},
+ tick(dt){if(!this.an)return[0,0,0,0];
+  this.an.getFloatFrequencyData(this.buf);const B=this.buf,bw=this.ctx.sampleRate/this.an.fftSize;
+  const band=(a,b)=>{let e=0;const i1=Math.min(B.length-1,Math.round(b/bw));for(let i=Math.max(1,Math.round(a/bw));i<=i1;i++)e+=Math.pow(10,B[i]/10);return e;};
+  const lo=band(200,700),mi=band(700,1400),hi=band(1400,3200),fz=band(4500,9000),tot=lo+mi+hi+1e-14,env=Math.sqrt(tot+.6*fz);
+  // normalisation automatique : plancher de bruit lent, crête qui retombe → niveau 0..1 quel que soit le volume de la vidéo
+  this.floor+=(env-this.floor)*(1-Math.exp(-dt/(env<this.floor?.3:6)));
+  this.peak=env>this.peak?env:Math.max(this.peak*Math.exp(-dt/4),this.floor*6);
+  const f0=this.floor*1.6;let l=Math.max(0,Math.min(1,(env-f0)/Math.max(this.peak-f0,1e-9)));l=Math.pow(l,.7);if(l<.07)l=0;
+  this.lvl=l;
+  // attaque (début de syllabe forte) → impulsion de tête, avec temps de retour
+  this.slow+=(l-this.slow)*(1-Math.exp(-dt/.14));this.cool=Math.max(0,this.cool-dt);
+  if(l-this.slow>.28&&l>.35&&!this.cool){T.pulse=Math.max(T.pulse||0,.55);this.cool=.28;}
+  const pl=lo/tot,pm=mi/tot,ph=hi/tot,fq=fz/(fz+tot),g=Math.min(1,l*2.6);
+  let jaw=l*(.2*pl+.95*pm+.32*ph),wide=g*(-.35*pl+.2*pm+.95*ph),rnd=g*pl;
+  const sf=Math.max(0,Math.min(1,(fq-.4)/.3)); // consonne sifflante : bouche presque fermée, lèvres écartées
+  jaw+=(l*.14-jaw)*sf;wide+=(g*.5-wide)*sf;rnd*=1-sf;
+  return this.tg=[jaw,wide,rnd,0];}};
+async function openPlayer(v){
+ if(VMODE){try{VPLAYER&&VPLAYER.destroy();}catch(_){}VPLAYER=null;const o=$("#vplay");if(o)o.remove();}
+ else{if(RES&&RES.pause&&!PAUSED){VPAUSED=true;PAUSED=true;RES.pause();}VMODE=true;board.classList.add("vmode");document.body.classList.add("vm");}
+ const w=document.createElement("div");w.id="vplay";
+ w.innerHTML='<div class="vbar"><span class="vtt"></span><button class="vs" title="Fait parler l’avatar avec la voix de la vidéo : capture l’audio de cet onglet (cochez « Partager l’audio de l’onglet »)">🎭 Synchro avatar</button><span class="vhint">Double-clic sur le tableau ou Échap = fermer</span></div><div class="vbox"><div id="vph"></div></div>';
+ w.querySelector(".vtt").textContent=v.titre;w.querySelector(".vtt").title=v.titre;
+ const watch="https://www.youtube.com/watch?v="+encodeURIComponent(v.id);
+ {const vs=w.querySelector(".vs"),sync=()=>{if(!vs.isConnected)return;vs.textContent=AUD.on?"🎭 Synchro : ON":"🎭 Synchro avatar";vs.classList.toggle("on",AUD.on);};
+  AUD.onchange=sync;sync();
+  vs.onclick=async e=>{e.stopPropagation();if(AUD.on){AUD.stop();return;}
+   if(!P0){vs.textContent="⚠ Ajoutez d'abord une photo";setTimeout(sync,3500);return;}
+   vs.textContent="🎭 …";const r=await AUD.start();sync();
+   const M={noaudio:"⚠ Cochez « Partager l'audio de l'onglet »",denied:"⚠ Autorisation refusée",unsupported:"⚠ Navigateur non compatible (Chrome / Edge)",error:"⚠ Capture impossible"};
+   if(M[r]){vs.textContent=M[r];setTimeout(sync,4500);}};}
+ board.appendChild(w);board.scrollTop=0;
+ const box=w.querySelector(".vbox"),alive=()=>VMODE&&$("#vplay")===w;
+ const fail=(msg,tip)=>{try{VPLAYER&&VPLAYER.destroy();}catch(_){}VPLAYER=null;box.innerHTML="";const d=document.createElement("div");d.className="verr";
+  d.innerHTML="<div></div><a class=\"yt\" target=\"_blank\" rel=\"noopener\">▶ Regarder sur YouTube</a>"+(tip?"<small></small>":"");
+  d.firstChild.textContent="⚠ "+msg;d.querySelector("a").href=watch;if(tip)d.querySelector("small").textContent=tip;box.appendChild(d);};
+ const ok=await ytEmbeddable(v.id);if(!alive())return;
+ if(ok===false){fail("Le propriétaire de cette vidéo n'autorise pas la lecture intégrée (ou elle est privée).");return;}
+ const YT=await ytAPI();if(!alive())return;
+ if(!YT){fail("Le lecteur YouTube n'a pas pu être chargé (connexion ?).");return;}
+ const pv={autoplay:1,rel:0,playsinline:1,modestbranding:1,enablejsapi:1};if(/^https?:$/.test(location.protocol))pv.origin=location.origin;
+ VPLAYER=new YT.Player(w.querySelector("#vph"),{width:"100%",height:"100%",videoId:v.id,host:"https://www.youtube-nocookie.com",playerVars:pv,
+  events:{onError:ev=>{if(!alive())return;const c=ev.data;
+   if(c===100)fail("Vidéo introuvable ou privée.");
+   else if(c===101||c===150)fail("Le propriétaire n'autorise pas la lecture sur d'autres sites.");
+   else if(c===153)fail("Lecteur refusé par YouTube (origine de la page absente).","");
+   else fail("Erreur de lecture (code "+c+").");}}});}
+addEventListener("keydown",e=>{if(e.key==="Escape"&&VMODE)closePlayer();});
+function addFig(d,im,ok){if(!im||!ok()||d.querySelector("figure"))return;d.insertBefore(figEl(im,"","pfig"),d.children[1]||null);}
+// ----- Recherche « sujet, thème, âge » : une seule saisie, validation par Entrée -----
+function parseAge(t){const x=nrm(t).trim().replace(/^(niveau|classe|age|public|pour|en|de)\s+/,"").replace(/\s+/g," ");let m;
+ // niveau donné par un âge (« 12 ans », « 12 ») → converti en niveau
+ if(m=x.match(/^(?:enfant de |age de )?(\d{1,2})\s*(?:ans?)?$/)){const n=+m[1],a=n+" ans";
+  return n<=5?["Enfant de 5 ans",a]:n<=10?["Primaire",a]:n<=14?["Collège",a]:n<=17?["Lycée",a]:n<=25?["Université",a]:["Débutant adulte",a];}
+ // niveau donné par un mot (la valeur doit être le segment entier : « Seconde Guerre mondiale » n'est pas un niveau)
+ const W=[[/^(maternelle|enfant|petit|tout petit|bebe)$/,"Enfant de 5 ans"],[/^(primaire|ecole|cp|ce1|ce2|cm1|cm2)$/,"Primaire"],[/^(college|[3-6](e|eme))$/,"Collège"],[/^(lycee|seconde|2nde|2de|premiere|1ere|terminale|tle|bac)$/,"Lycée"],[/^(universite|fac|licence|master|etudiant|superieur)$/,"Université"],[/^(adulte|debutant|debutant adulte|adulte debutant)$/,"Débutant adulte"],[/^(expert|avance|professionnel|pro|specialiste)$/,"Expert"]];
+ for(const [r,n] of W)if(r.test(x))return[n,""];return null;}
+function parseQ(raw){const parts=String(raw||"").split(/[,;|]/).map(t=>t.trim()).filter(Boolean);let lv=null;
+ if(parts.length>1){lv=parseAge(parts[parts.length-1]);if(lv)parts.pop();} // niveau = dernier segment, reconnu strictement
+ const sujet=parts.length>1?parts[0]:"",theme=parts.length>1?parts.slice(1).join(", "):(parts[0]||"");
+ return{sujet,theme,niv:lv?lv[0]:"Débutant adulte",ageNum:lv?lv[1]:"",ageOk:!!lv};}
+const _ph=$("#parse");
+$("#q").addEventListener("input",()=>{const raw=$("#q").value.trim();if(!raw){_ph.classList.add("hid");return;}
+ const P=parseQ(raw);_ph.classList.remove("hid");
+ _ph.innerHTML="Sujet : <b>"+esc(P.sujet||"—")+"</b> · Thème : <b>"+esc(P.theme||"—")+"</b> · Niveau : <b>"+esc(P.niv)+(P.ageNum?" ("+esc(P.ageNum)+")":"")+(P.ageOk?"":" (non précisé)")+"</b>";});
+addEventListener("keydown",e=>{if(e.altKey&&(e.key==="u"||e.key==="U")){e.preventDefault();document.body.classList.toggle("clean");}});
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();if(!$("#go").disabled)$("#go").click();}});
+$("#go").onclick=async()=>{
+ const P=parseQ($("#q").value),sujet=P.sujet,theme=P.theme||"un sujet au choix",niv=P.niv,id=++run,mine=++gen,kid=niv==="Enfant de 5 ans";kidMode=kid;
+ speechSynthesis.cancel();PAUSED=false;pzShow(false);closePlayer(true);
+ const btn=$("#go");btn.disabled=true;board.classList.remove("focus");{const vt=$("#vthumbs");vt.classList.add("hid");vt.innerHTML="";}paraSet(null);board.innerHTML="<h1>Je prépare le cours…</h1>";bulle.textContent="Un instant, je prépare mon cours.";
+ let c;
+ try{
+  c=await askLLM(`Tu es un professeur bienveillant. Crée un cours en français ${sujet?`dans le domaine « ${sujet} », `:""}sur le thème « ${theme} » pour le niveau « ${niv} »${P.ageNum?` (élève de ${P.ageNum})`:""}. ${kid?"Le cours doit être compris par un enfant de 5 ans : tutoie-le, utilise uniquement des mots très simples, des phrases très courtes (10 mots maximum), compare avec des choses qu'il connaît (animaux, jouets, repas, maison, école), pas de mot compliqué ni de chiffre difficile. Sois très court, clair et joyeux. Les exercices sont de toutes petites questions auxquelles il répond par un mot ou un choix entre deux réponses.":""} Écris l'intro et le texte de chaque point comme un vrai professeur qui explique à voix haute à ses élèves : registre oral naturel, adresse directe (tutoie un enfant, vouvoie sinon), phrases courtes au rythme varié, une question rhétorique de temps en temps, mots de liaison oraux (« Alors », « Regardez », « Imaginez », « Autrement dit », « Résultat »), un exemple concret expliqué pas à pas. Pas de parenthèses, pas d'abréviations, pas de symboles ni de listes. Réponds UNIQUEMENT en JSON valide : {"titre":string,"image":string (terme de recherche très court, en français, qui décrit une photo concrète du sujet, ex : Tour Eiffel),"image_en":string (le sujet principal du cours en anglais, 1 à 3 mots, ex : Eiffel Tower),"intro":string (petite introduction qui présente le thème et donne envie de le découvrir : ${kid?"2 phrases très courtes":"2 à 3 phrases claires"}),"points":[{"titre":string,"titre_en":string (ce titre traduit en anglais, 1 à 4 mots),"image":string (terme de recherche très court, en français, d'une photo concrète illustrant ce point),"image_en":string (en anglais, 2 à 4 mots : le sujet principal du cours + ce que montre une photo qui illustre le TITRE de ce point, ex : giraffe long neck),"texte":string (${kid?"1 à 2 phrases très courtes avec une comparaison simple":"2-3 phrases claires, avec un exemple"})}] (${kid?"3 points":"3 à 4 points"}),"exercices":[{"enonce":string,"indice":string,"correction":string}] (${kid?"4":"5"} exercices différents sur le sujet, du plus facile au plus difficile)}`);
+ }catch(e){board.innerHTML="<p>Erreur de génération : "+esc(e.message||e.code||e)+"</p>";btn.disabled=false;return;}
+ btn.disabled=false;if(mine!==gen)return;
+ board.classList.add("focus");board.innerHTML=`<h1>${esc(c.titre)}</h1><p class="tip">Cliquez sur une phrase pour que le professeur la lise (ailleurs sur le tableau : pause / reprise).</p><div id="media"></div><p id="in" class="intro"></p><div id="pts"></div><div class="ex hid" id="ex"></div>`;
+ const used=new Set();let chain=Promise.resolve();
+ const must={en:toks(c.image_en),fr:toks(c.image)}; // sujet principal du cours : toute photo doit le mentionner
+ const nxt=(qs,desc)=>chain=chain.then(()=>findImage(qs,used,must,{},desc,true)).catch(()=>null);
+ if(!document.body.classList.contains("clean"))nxt([[c.image_en,"en"],[c.image,"fr"],[c.titre,"fr"],[theme,"fr"]],c.image_en||c.titre).then(im=>{if(mine!==gen)return;
+  const tip=board.querySelector(".tip");if(!tip)return;
+  if(im){const m=$("#media");if(m)m.appendChild(figEl(im,"fig",""));}});
+ const vq=c.titre+(sujet&&!nrm(c.titre).includes(nrm(sujet))?" "+sujet:"");
+ showThumbs([vq+(kid?" pour enfants":""),...(c.points||[]).slice(0,4).map(p=>p.titre+" "+(sujet||c.titre)+(kid?" pour enfants":""))],()=>mine===gen);
+ const pts=c.points||[];
+ const minus=(x,y)=>x.filter(t=>!y.includes(t)); // mots propres au paragraphe (sans le sujet général du cours)
+ const imgP=pts.map(()=>Promise.resolve(null)); // pas de photo sur les paragraphes (seule la photo principale du cours est affichée)
+ const inEl=$("#in");inEl.innerHTML=sentHTML(c.intro);inEl.dataset.say=c.intro;
+ const items=[inEl];
+ for(const [i,p] of pts.entries()){
+  const d=document.createElement("div");d.className="pt";d.dataset.say=(i===0?"Commençons, ":i===pts.length-1?"Et pour finir, ":["Ensuite, ","Passons à la suite, ","Voyons maintenant, ","Alors, "][i%4])+p.titre+". "+p.texte;d.innerHTML=`<h2>${esc(p.titre)}</h2><p>${sentHTML(p.texte)}</p>`;d.appendChild(paraLinks(p.titre+" "+(sujet||c.titre)+(kid?" pour enfants":"")));$("#pts").appendChild(d);items.push(d);}
+ { // paragraphe « Vidéos pour aller plus loin » : dernier paragraphe du cours, lu par le professeur, avec les liens vidéo
+  const q=vq+(kid?" pour enfants":""),tx=kid?"Pour aller plus loin, regarde des vidéos sur ce sujet.":"Pour aller plus loin, vous pouvez regarder des vidéos sur ce sujet.",
+   vd=document.createElement("div"),row=document.createElement("div"),
+   PL=[["Arte Science",x=>"https://www.arte.tv/fr/search/?q="+encodeURIComponent(x)],["Dailymotion",x=>"https://www.dailymotion.com/search/"+encodeURIComponent(x)],["TikTok",x=>"https://www.tiktok.com/search?q="+encodeURIComponent(x)],["Instagram",x=>"https://www.instagram.com/explore/tags/"+(nrm(x).replace(/[^a-z0-9]/g,"")||"cours")+"/"],["Facebook Watch",x=>"https://www.facebook.com/watch/search/?q="+encodeURIComponent(x)],["Google Actualités",x=>"https://news.google.com/search?hl=fr&gl=FR&ceid=FR:fr&q="+encodeURIComponent(x)]];
+  vd.className="pt";vd.dataset.say=tx;vd.innerHTML=`<h2>📺 Vidéos pour aller plus loin</h2><p>${sentHTML(tx)}</p>`;
+  row.className="pl vl";row.appendChild(ytLink(q));
+  PL.forEach(([n,u])=>{const a=document.createElement("a");a.className="yt";a.target="_blank";a.rel="noopener";a.href=u(q);a.textContent=n;a.onclick=e=>e.stopPropagation();row.appendChild(a);});
+  vd.appendChild(row);$("#pts").appendChild(vd);items.push(vd);}
+ COURSE.items=items;COURSE.mine=mine;COURSE.end=null;
+ const exs=(c.exercices||(c.exercice?[c.exercice]:[])).filter(e=>e&&e.enonce);
+ const ex=$("#ex");ex.classList.remove("hid");ex.innerHTML="<h2>✏️ Exercices</h2>";let first=null;
+ exs.forEach((e,k)=>{const q=document.createElement("div");q.className="q";
+  q.innerHTML=`<p><b>${k+1}.</b> ${sentHTML(e.enonce)}</p><p class="hid">💡 ${sentHTML(e.indice)}</p><p class="hid">✅ ${sentHTML(e.correction)}</p><div class="ctl"><button>Indice</button><button>Correction</button></div>`;
+  const [pq,pi,pc]=q.querySelectorAll("p"),[b1,b2]=q.querySelectorAll("button");
+  pq.dataset.say=e.enonce;pi.dataset.say="Indice. "+e.indice;pc.dataset.say="Voici la correction. "+e.correction;
+  b1.onclick=()=>pi.classList.remove("hid");
+  b2.onclick=()=>{pc.classList.remove("hid");mark(pc);say("Voici la correction. "+e.correction,run);};
+  ex.appendChild(q);if(!first)first=pq;});
+ // Fin du cours : le professeur passe aux exercices, puis la lecture s'arrête
+ COURSE.end=async id=>{if(!first||id!==run||mine!==gen)return;ex.scrollIntoView({block:"nearest"});mark(first);await say("À vous de jouer ! "+exs[0].enonce,id);};
+ courseFrom(inEl); // lecture continue : introduction, tous les paragraphes, puis exercices
+};
+// Flèches ← → : paragraphe précédent / suivant (relu par le professeur)
+addEventListener("keydown",e=>{if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;if(e.target&&e.target.closest&&e.target.closest("input,select,textarea"))return;if(VMODE||!board.classList.contains("focus"))return;
+ const L=[...board.querySelectorAll("#in,.pt")];if(!L.length)return;let k=L.findIndex(x=>x.classList.contains("sel"));
+ k=e.key==="ArrowRight"?Math.min(L.length-1,k+1):(k<0?L.length-1:Math.max(0,k-1));e.preventDefault();courseFrom(L[k]);});
+// Clic sur un paragraphe : le professeur le relit en montrant le tableau
+board.addEventListener("dblclick",ev=>{if(!VMODE||ev.target.closest("button,a,input,select,textarea"))return;ev.preventDefault();closePlayer();}); // double-clic sur le tableau = ferme la vidéo (le clic dans le lecteur lui-même reste à YouTube)
+board.addEventListener("click",ev=>{
+ if(VMODE||ev.target.closest("a,button,input,select,textarea"))return;
+ {const ss=ev.target.closest(".ss"),h=ss&&ss.closest("[data-say]");if(h){const k=[...h.querySelectorAll(".ss")].indexOf(ss);if(k>=0){readSent(h,k);return;}}}
+ if(PAUSED&&RES&&RES.resume){PAUSED=false;pzShow(false);RES.resume();return;}   // en pause → reprise
+ if(RES&&RES.pause){PAUSED=true;pzShow(true);RES.pause();return;}                 // en lecture → pause
+ const el=board.querySelector(".sel[data-say]")||ev.target.closest("[data-say]");if(!el)return; // à l'arrêt → relit le paragraphe en cours
+ courseFrom(el);
+});
+{const pb=$("#para .pb");pb.addEventListener("click",ev=>{const sp=ev.target.closest(".ps");if(!sp)return;const k=[...pb.querySelectorAll(".ps")].indexOf(sp),h=board.querySelector(".sel[data-say]");if(h&&k>=0)readSent(h,k);});}
+</script></body></html>
